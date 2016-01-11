@@ -1,0 +1,3 @@
+#!/bin/bash -e
+
+ssh server.example.net -i /run/fedora-networking/id_rsa true

@@ -1,0 +1,99 @@
+#!/bin/bash
+
+error() {
+    echo "$@" >&2
+    exit 1
+}
+
+prepare() {
+    cd "$dir"
+
+    ns_server=test-server
+    ns_client=test-client
+
+    dev_server=test-server
+    dev_client=test-client
+
+    export ipv4_server=192.0.2.1/24
+    export ipv6_server=2001:DB8::2:1/64
+
+    export ipv4_client=192.0.2.2/24
+    export ipv6_client=2001:DB8::2:2/64
+}
+
+perform() {
+    cleanup
+    trap "cleanup; echo FAIL" INT QUIT TERM
+
+    ip netns add $ns_server
+    ip netns add $ns_client
+    ip link add dev $dev_server type veth peer name $dev_client
+    ip link set $dev_server netns $ns_server
+    ip link set $dev_client netns $ns_client
+
+
+    ip -n $ns_server link set $dev_server up
+    [ "$ipv4_server" ] && ip -n $ns_server address add $ipv4_server dev $dev_server
+    [ "$ipv6_server" ] && ip -n $ns_server address add $ipv6_server dev $dev_server
+
+    ip -n $ns_client link set $dev_client up
+    ip -n $ns_client address add $ipv4_client dev $dev_client
+    ip -n $ns_client address add $ipv6_client dev $dev_client
+
+    export NETRESOLVE_BACKENDS="any|loopback|numerichost|hosts"
+    export NETRESOLVE_SYSCONFDIR="`pwd`"
+
+    cd "testcases/$testcase"
+
+    if [ -x ./server ]; then
+        ip netns exec $ns_server wrapresolve strace -f -o strace.server ./server &
+    fi
+    if [ -x ./client ]; then
+        ip netns exec $ns_client wrapresolve strace -f -o strace.client ./client || error "Client failed."
+    fi
+    if [ -x ./server ]; then
+        kill -9 "$!"
+    fi
+
+    if [ "$ipv6_client" -a "$ipv6_server" ]; then
+        #grep -qE "^[0-9]+  connect\([0-9]+, {sa_family=AF_INET6,"  strace.client || error "Client didn't connect over IPv6"
+        :
+    fi
+
+    cleanup
+
+    echo "OK"
+}
+
+cleanup() {
+    ip netns delete $ns_server || true
+    ip netns delete $ns_client || true
+
+    trap - INT QUIT TERM
+}
+
+run_one_test() {
+    testcase="$1"
+
+    echo "$testcase:" "Dualstack to dualstack"
+    prepare
+    perform
+
+    echo "$testcase:" "Dualstack to IPv4"
+    prepare
+    unset ipv6_server
+    perform
+}
+
+[ "$EUID" == 0 ] || error "The script requires root priviliges. Please run it using 'sudo'."
+
+dir="`pwd`"
+
+if [ $# -eq 0 ]; then
+    set -- `ls testcases`
+fi
+
+while [ $# -ne 0 ]; do
+    run_one_test "$1"
+    shift
+done

@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+mkdir -p /run/fedora-networking
+cd /run/fedora-networking
+
+[ -f id_rsa -a -f id_rsa.pub ] || ssh-keygen -f id_rsa -P ''
+cp id_rsa.pub authorized_keys
+
+`which sshd` -D -e -o "AuthorizedKeysFile /run/fedora-networking/authorized_keys"
