@@ -1,0 +1,4 @@
+#!/bin/bash -e
+
+echo "TEST" | netresolve --connect --node server.example.net --service http
+bash
