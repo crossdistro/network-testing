@@ -2,8 +2,12 @@
 
 ## Fedora networking tests
 
-Run an individual test:
+Run individual test (for netresolve):
 
-    cd tests
-    sudo ./run-tests ping
-    sudo ./run-tests ssh
+    cd netns-tests
+    sudo ./run netresolve
+
+Run all tests:
+
+    cd netns-tests
+    sudo ./run

@@ -6,6 +6,7 @@ error() {
 }
 
 prepare() {
+    echo "== $testcase/$scenario =="
     cd "$dir"
 
     ns_server=test-server
@@ -37,8 +38,8 @@ perform() {
     [ "$ipv6_server" ] && ip -n $ns_server address add $ipv6_server dev $dev_server
 
     ip -n $ns_client link set $dev_client up
-    ip -n $ns_client address add $ipv4_client dev $dev_client
-    ip -n $ns_client address add $ipv6_client dev $dev_client
+    [ "$ipv4_client" ] && ip -n $ns_client address add $ipv4_client dev $dev_client
+    [ "$ipv6_client" ] && ip -n $ns_client address add $ipv6_client dev $dev_client
 
     export NETRESOLVE_BACKENDS="any|loopback|numerichost|hosts"
     export NETRESOLVE_SYSCONFDIR="`pwd`"
@@ -46,21 +47,23 @@ perform() {
     cd "testcases/$testcase"
 
     if [ -x ./server ]; then
-        ip netns exec $ns_server wrapresolve strace -f -o strace.server ./server &
+        ip netns exec $ns_server wrapresolve strace -f -o strace.$scenario.server ./server &
+        sleep 1
     fi
     if [ -x ./client ]; then
-        ip netns exec $ns_client wrapresolve strace -f -o strace.client ./client || error "Client failed."
+        time ip netns exec $ns_client wrapresolve strace -f -o strace.$scenario.client ./client || error "Client script failed."
     fi
     if [ -x ./server ]; then
-        kill -9 "$!"
+        kill $!
+        wait $!
     fi
 
-    if [ "$ipv6_client" -a "$ipv6_server" ]; then
-        #grep -qE "^[0-9]+  connect\([0-9]+, {sa_family=AF_INET6,"  strace.client || error "Client didn't connect over IPv6"
-        :
+    if [ "$ipv6_client" ]; then
+        grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=AF_INET6,"  strace.$scenario.client || error "Client was expected to attempt connection over IPv6 but it didn't."
+    else
+        grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=AF_INET6,"  strace.$scenario.client && error "Client wasn't expected to attempt connection over IPv6 but it did."
+        grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=AF_INET,"  strace.$scenario.client || error "Client was expected to attempt connection over IPv4 but it didd't."
     fi
-
-    cleanup
 
     echo "OK"
 }
@@ -75,13 +78,13 @@ cleanup() {
 run_one_test() {
     testcase="$1"
 
-    echo "$testcase:" "Dualstack to dualstack"
+    scenario=dualstack-to-dualstack
     prepare
     perform
 
-    echo "$testcase:" "Dualstack to IPv4"
+    scenario=ipv4-to-dualstack
     prepare
-    unset ipv6_server
+    unset ipv6_client
     perform
 }
 
@@ -97,3 +100,5 @@ while [ $# -ne 0 ]; do
     run_one_test "$1"
     shift
 done
+
+cleanup
