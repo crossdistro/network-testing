@@ -1,0 +1,3 @@
+#!/bin/bash -e
+
+echo "TEST" | nc -v -q 1 server.example.net http
