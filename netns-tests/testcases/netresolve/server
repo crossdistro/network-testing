@@ -1,3 +1,5 @@
 #!/bin/bash -e
 
-netresolve --listen --service http
+service=http
+
+netresolve --listen --service $service

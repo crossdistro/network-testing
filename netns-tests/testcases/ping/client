@@ -1,3 +1,5 @@
 #!/bin/bash -e
 
-ping -q -c1 server.example.net
+destination=server.example.net
+
+ping -q -c1 $destination

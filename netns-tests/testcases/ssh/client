@@ -1,3 +1,5 @@
 #!/bin/bash -e
 
-ssh server.example.net -i /run/fedora-networking/id_rsa true
+destination=server.example.net
+
+ssh $destination -i /run/fedora-networking/id_rsa true

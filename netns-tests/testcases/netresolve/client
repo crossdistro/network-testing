@@ -1,4 +1,6 @@
 #!/bin/bash -e
 
-echo "TEST" | netresolve --connect --node server.example.net --service http
-bash
+destination=server.example.net
+service=http
+
+echo "TEST" | netresolve --connect --node $destination --service $service

@@ -1,13 +1,13 @@
 #!/bin/bash -ex
 
 interface=test-client
+destination=server.example.net
 
 cleanup() {
     if [ -f "/run/dhcpcd-$interface.pid" ]; then
         pid=`cat /run/dhcpcd-$interface.pid`
 
         kill -9 $pid
-        ps -ef | grep dhcpcd
         rm /run/dhcpcd-$interface.pid
     fi
 }
@@ -19,4 +19,4 @@ cleanup
 dhcpcd $interface --debug --script ./script
 cleanup
 
-ping -q -c1 server.example.net
+ping -q -c1 $destination
