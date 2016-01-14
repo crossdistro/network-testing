@@ -1,0 +1,22 @@
+#!/bin/bash -ex
+
+interface=test-client
+
+cleanup() {
+    if [ -f "/run/dhcpcd-$interface.pid" ]; then
+        pid=`cat /run/dhcpcd-$interface.pid`
+
+        kill -9 $pid
+        ps -ef | grep dhcpcd
+        rm /run/dhcpcd-$interface.pid
+    fi
+}
+
+ip -4 address flush scope global
+ip -6 address flush scope global
+
+cleanup
+dhcpcd $interface --debug --script ./script
+cleanup
+
+ping -q -c1 server.example.net
