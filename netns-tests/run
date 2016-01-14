@@ -54,7 +54,7 @@ perform() {
         time ip netns exec $ns_client wrapresolve strace -f -o strace.$scenario.client ./client || error "Client script failed."
     fi
     if [ -x ./server ]; then
-        kill $!
+        kill -9 $!
         wait $!
     fi
 
