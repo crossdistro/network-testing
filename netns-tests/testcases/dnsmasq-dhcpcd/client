@@ -3,20 +3,12 @@
 interface=test-client
 destination=server.example.net
 
-cleanup() {
-    if [ -f "/run/dhcpcd-$interface.pid" ]; then
-        pid=`cat /run/dhcpcd-$interface.pid`
-
-        kill -9 $pid
-        rm /run/dhcpcd-$interface.pid
-    fi
-}
-
 ip -4 address flush scope global
 ip -6 address flush scope global
 
-cleanup
+dhcpcd -k $interface || true
 dhcpcd $interface --debug --script ./script
-cleanup
 
 ping -q -c1 $destination
+
+dhcpcd -k $interface

@@ -5,4 +5,4 @@ range4_end=192.0.2.200
 range6_start=2001:db8::1:0,2001:db8::2:0
 leasetime=10m
 
-dnsmasq --dhcp-range=$range4_start,$range4_end,$leasetime --enable-ra --dhcp-range=$range4_start,$leasetime
+dnsmasq --dhcp-range=$range4_start,$range4_end,$leasetime --enable-ra --dhcp-range=$range6_start,$leasetime
