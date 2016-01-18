@@ -22,6 +22,16 @@ prepare() {
     export ipv6_client=2001:DB8::2:2/64
 }
 
+expect_attempted() {
+    grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=$1," strace.$scenario.client \
+        || error "Client was expected to attempt connection using $1 but it didn't."
+}
+
+expect_not_attempted() {
+    grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=$1," strace.$scenario.client \
+        && error "Client wasn't expected to attempt connection using $1 but it did."
+}
+
 perform() {
     cleanup
     trap "cleanup; echo FAIL" INT QUIT TERM
@@ -58,12 +68,23 @@ perform() {
         wait $!
     fi
 
-    if [ "$ipv6_client" ]; then
-        grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=AF_INET6,"  strace.$scenario.client || error "Client was expected to attempt connection over IPv6 but it didn't."
-    else
-        grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=AF_INET6,"  strace.$scenario.client && error "Client wasn't expected to attempt connection over IPv6 but it did."
-        grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=AF_INET,"  strace.$scenario.client || error "Client was expected to attempt connection over IPv4 but it didd't."
-    fi
+    case $scenario in
+    dualstack-to-dualstack)
+        # Prefer IPv6 connection.
+        expect_not_attempted AF_INET
+        expect_attempted AF_INET6
+        ;;
+    ipv4-to-dualstack)
+        # Prefer IPv4 connection.
+        expect_not_attempted AF_INET6
+        expect_attempted AF_INET
+        ;;
+    dualstack-to-lost-ipv6)
+        # Prefer IPv6 connection, fallback to IPv4 connection.
+        expect_attempted AF_INET6
+        expect_attempted AF_INET
+        ;;
+    esac
 
     echo "OK"
 }
@@ -75,17 +96,28 @@ cleanup() {
     trap - INT QUIT TERM
 }
 
-run_one_test() {
+run() {
     testcase="$1"
+    scenario="$2"
 
-    scenario=dualstack-to-dualstack
     prepare
-    perform
 
-    scenario=ipv4-to-dualstack
-    prepare
-    unset ipv6_client
+    case $scenario in
+    ipv4-to-dualstack)
+        unset ipv6_client
+        ;;
+    dualstack-to-lost-ipv6)
+        ip netns exec $ns_server ip6tables -A INPUT -j DROP
+        ;;
+    esac
+
     perform
+}
+
+run_testcase() {
+    run "$1" dualstack-to-dualstack
+    run "$1" ipv4-to-dualstack
+    run "$1" dualstack-to-lost-ipv6
 }
 
 [ "$EUID" == 0 ] || error "The script requires root priviliges. Please run it using 'sudo'."
@@ -96,9 +128,18 @@ if [ $# -eq 0 ]; then
     set -- `ls testcases`
 fi
 
-while [ $# -ne 0 ]; do
-    run_one_test "$1"
-    shift
-done
+case $# in
+0)
+    for testcase in `ls testcases`; do
+        run_testcase "$1"
+    done
+    ;;
+1)
+    run_testcase "$1"
+    ;;
+2)
+    run "$1" "$2"
+    ;;
+esac
 
 cleanup
