@@ -44,7 +44,7 @@ expect_not_attempted() {
 
 perform() {
     cleanup
-    trap "cleanup; echo FAIL" INT QUIT TERM
+    trap "cleanup; echo FAIL" INT QUIT TERM EXIT
 
     ip netns add $ns_server
     ip netns add $ns_client
@@ -107,7 +107,7 @@ cleanup() {
     ip netns delete $ns_server || true
     ip netns delete $ns_client || true
 
-    trap - INT QUIT TERM
+    trap - INT QUIT TERM EXIT
 }
 
 run() {
