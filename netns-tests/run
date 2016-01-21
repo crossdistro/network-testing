@@ -145,14 +145,10 @@ run_testcase() {
 
 dir="`pwd`"
 
-if [ $# -eq 0 ]; then
-    set -- `ls testcases`
-fi
-
 case $# in
 0)
     for testcase in `ls testcases`; do
-        run_testcase "$1"
+        run_testcase "$testcase"
     done
     ;;
 1)
