@@ -1,14 +1,11 @@
 #!/bin/bash -ex
 
-interface=test-client
-destination=server.example.net
-
 ip -4 address flush scope global
 ip -6 address flush scope global
 
-dhcpcd -k $interface || true
-dhcpcd $interface --debug --script ./script
+dhcpcd -k $INTERFACE || true
+dhcpcd $INTERFACE --debug --script ./script
 
-ping -q -c1 $destination
+ping -q -c1 $DESTINATION
 
-dhcpcd -k $interface
+dhcpcd -k $INTERFACE

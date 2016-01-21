@@ -1,6 +1,5 @@
 #!/bin/bash -e
 
-destination=server.example.net
-service=http
+export NETRESOLVE_SEQUENTIAL_CONNECT=1
 
-echo "TEST" | netresolve --connect --node $destination --service $service
+echo "TEST" | netresolve --connect --node $DESTINATION --service http

@@ -64,16 +64,23 @@ perform() {
     export NETRESOLVE_BACKENDS="any|loopback|numerichost|hosts"
     export NETRESOLVE_SYSCONFDIR="`pwd`"
 
+    export SOURCE=client.example.net
+    export DESTINATION=server.example.net
+
     cd "testcases/$testcase"
 
     local strace=
 
     if [ -x ./server ]; then
+        export INTERFACE="$dev_server"
+
         [ "$NOSTRACE" ] || strace="strace -f -o strace.$scenario.server"
         ip netns exec $ns_server wrapresolve $strace ./server &
         sleep 1
     fi
     if [ -x ./client ]; then
+        export INTERFACE="$dev_client"
+
         [ "$NOSTRACE" ] || strace="strace -f -o strace.$scenario.client"
         time ip netns exec $ns_client wrapresolve $strace ./client || error "Client script failed."
     fi

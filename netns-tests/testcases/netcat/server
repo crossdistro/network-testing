@@ -1,5 +1,3 @@
 #!/bin/bash -e
 
-service=http
-
-nc -v -l -p $service
+nc -v -l -p http

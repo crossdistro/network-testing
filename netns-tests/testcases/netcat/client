@@ -1,6 +1,3 @@
 #!/bin/bash -e
 
-destination=server.example.net
-service=http
-
-echo "TEST" | nc -v -q 1 $destination $service
+echo "TEST" | nc -v -q 1 $DESTINATION http

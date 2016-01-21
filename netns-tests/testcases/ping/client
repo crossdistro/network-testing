@@ -1,5 +1,3 @@
 #!/bin/bash -e
 
-destination=server.example.net
-
-ping -q -c1 $destination
+ping -n -q -c1 $DESTINATION
