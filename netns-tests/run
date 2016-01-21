@@ -22,14 +22,24 @@ prepare() {
     export ipv6_client=2001:DB8::2:2/64
 }
 
+check_attempted() {
+    local six=""
+
+    [ "$1" == AF_INET6 ] && six=6
+
+    grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=AF_INET${six}, sin${six}_port=htons\([1-9][0-9]*\)," strace.$scenario.client
+}
+
 expect_attempted() {
-    grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=$1," strace.$scenario.client \
-        || error "Client was expected to attempt connection using $1 but it didn't."
+    [ "$NOSTRACE" ] && return 0
+
+    check_attempted "$1" || error "Client was expected to attempt connection using $1 but it didn't."
 }
 
 expect_not_attempted() {
-    grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=$1," strace.$scenario.client \
-        && error "Client wasn't expected to attempt connection using $1 but it did."
+    [ "$NOSTRACE" ] && return 0
+
+    check_attempted "$1" && error "Client wasn't expected to attempt connection using $1 but it did."
 }
 
 perform() {
@@ -56,12 +66,16 @@ perform() {
 
     cd "testcases/$testcase"
 
+    local strace=
+
     if [ -x ./server ]; then
-        ip netns exec $ns_server wrapresolve strace -f -o strace.$scenario.server ./server &
+        [ "$NOSTRACE" ] || strace="strace -f -o strace.$scenario.server"
+        ip netns exec $ns_server wrapresolve $strace ./server &
         sleep 1
     fi
     if [ -x ./client ]; then
-        time ip netns exec $ns_client wrapresolve strace -f -o strace.$scenario.client ./client || error "Client script failed."
+        [ "$NOSTRACE" ] || strace="strace -f -o strace.$scenario.client"
+        time ip netns exec $ns_client wrapresolve $strace ./client || error "Client script failed."
     fi
     if [ -x ./server ]; then
         kill -9 $!
