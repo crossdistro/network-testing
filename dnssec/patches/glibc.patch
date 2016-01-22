@@ -1,74 +1,74 @@
-From d7f9ce9e4842a69114c421c6f30b5199c01a1b5e Mon Sep 17 00:00:00 2001
+From 05e57845ff69f5dbf91f104a7d42cf094df72af0 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Pavel=20=C5=A0imerda?= <psimerda@redhat.com>
 Date: Sun, 16 Nov 2014 00:28:04 +0100
-Subject: [PATCH] filter out AD flag unless there is 'dnssec-trusted' in
- '/etc/resolv.conf'
+Subject: [PATCH] only request and accept AD flag when option ad-flag is set
 
 ---
- resolv/res_init.c    | 5 +++++
- resolv/res_mkquery.c | 2 ++
+ resolv/res_init.c    | 3 ++-
+ resolv/res_mkquery.c | 4 ++++
  resolv/res_query.c   | 4 ++++
- resolv/resolv.h      | 3 ++-
- 4 files changed, 13 insertions(+), 1 deletion(-)
+ resolv/resolv.h      | 4 ++++
+ 4 files changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/resolv/res_init.c b/resolv/res_init.c
-index e0b6a80..374f644 100644
+index e0b6a80..f72ab7f 100644
 --- a/resolv/res_init.c
 +++ b/resolv/res_init.c
-@@ -402,6 +402,11 @@ __res_vinit(res_state statp, int preinit) {
- 		    res_setoptions(statp, buf + sizeof("options") - 1, "conf");
- 		    continue;
- 		}
-+
-+		if (!strncmp(buf, "dnssec-trusted\n", 15)) {
-+		    statp->dnssec_trusted = true;
-+		    continue;
-+		}
- 	    }
- 	    statp->nscount = nserv;
- #ifdef _LIBC
+@@ -530,7 +530,8 @@ res_setoptions(res_state statp, const char *options, const char *source) {
+ 		    { STRnLEN ("single-request"), 0, RES_SNGLKUP },
+ 		    { STRnLEN ("no_tld_query"), 0, RES_NOTLDQUERY },
+ 		    { STRnLEN ("no-tld-query"), 0, RES_NOTLDQUERY },
+-		    { STRnLEN ("use-vc"), 0, RES_USEVC }
++		    { STRnLEN ("use-vc"), 0, RES_USEVC },
++		    { STRnLEN ("ad-flag"), 0, RES_AD_FLAG }
+ 		  };
+ #define noptions (sizeof (options) / sizeof (options[0]))
+ 		  int i;
 diff --git a/resolv/res_mkquery.c b/resolv/res_mkquery.c
-index 1635e6a..36c7b4d 100644
+index 1635e6a..9716010 100644
 --- a/resolv/res_mkquery.c
 +++ b/resolv/res_mkquery.c
-@@ -143,6 +143,8 @@ res_nmkquery(res_state statp,
+@@ -143,6 +143,10 @@ res_nmkquery(res_state statp,
  	hp->opcode = op;
  	hp->rd = (statp->options & RES_RECURSE) != 0;
  	hp->rcode = NOERROR;
-+	if (statp->dnssec_trusted)
++	/* Signal support for the AD flag when requested using
++	 * `option ad-flag`. */
++	if (statp->options & RES_AD_FLAG)
 +	  hp->ad = 1;
  	cp = buf + HFIXEDSZ;
  	buflen -= HFIXEDSZ;
  	dpp = dnptrs;
 diff --git a/resolv/res_query.c b/resolv/res_query.c
-index 4a9b3b3..ef617df 100644
+index 4a9b3b3..d9d3161 100644
 --- a/resolv/res_query.c
 +++ b/resolv/res_query.c
 @@ -242,6 +242,10 @@ __libc_res_nquery(res_state statp,
  	  /* __libc_res_nsend might have reallocated the buffer.  */
  	  hp = (HEADER *) *answerp;
  
-+	/* Clear untrusted AD flag. */
-+	if (!statp->dnssec_trusted)
++	/* Clear AD flag unless explicitly trusted using `option ad-flag`. */
++	if(!(statp->options & RES_AD_FLAG))
 +	  hp->ad = 0;
 +
  	/* We simplify the following tests by assigning HP to HP2 or
  	   vice versa.  It is easy to verify that this is the same as
  	   ignoring all tests of HP or HP2.  */
 diff --git a/resolv/resolv.h b/resolv/resolv.h
-index 53c3bba..47286a0 100644
+index 53c3bba..4150a1f 100644
 --- a/resolv/resolv.h
 +++ b/resolv/resolv.h
-@@ -117,7 +117,8 @@ struct __res_state {
- 	unsigned ndots:4;		/* threshold for initial abs. query */
- 	unsigned nsort:4;		/* number of elements in sort_list[] */
- 	unsigned ipv6_unavail:1;	/* connecting to IPv6 server failed */
--	unsigned unused:23;
-+	unsigned dnssec_trusted:1;	/* trust AD flag from the server */
-+	unsigned unused:22;
- 	struct {
- 		struct in_addr	addr;
- 		u_int32_t	mask;
+@@ -221,6 +221,10 @@ struct res_sym {
+ #define RES_USE_DNSSEC	0x00800000	/* use DNSSEC using OK bit in OPT */
+ #define RES_NOTLDQUERY	0x01000000	/* Do not look up unqualified name
+ 					   as a TLD.  */
++#define RES_AD_FLAG	0x02000000	/* Request and accept AD flag. This
++                                           option should be set on the system
++                                           level using `option ad-flag` in
++                                           `/etc/resolv.conf`. */
+ 
+ #define RES_DEFAULT	(RES_RECURSE|RES_DEFNAMES|RES_DNSRCH|RES_NOIP6DOTINT)
+ 
 -- 
 2.6.3
 
