@@ -1,0 +1,74 @@
+From d7f9ce9e4842a69114c421c6f30b5199c01a1b5e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Pavel=20=C5=A0imerda?= <psimerda@redhat.com>
+Date: Sun, 16 Nov 2014 00:28:04 +0100
+Subject: [PATCH] filter out AD flag unless there is 'dnssec-trusted' in
+ '/etc/resolv.conf'
+
+---
+ resolv/res_init.c    | 5 +++++
+ resolv/res_mkquery.c | 2 ++
+ resolv/res_query.c   | 4 ++++
+ resolv/resolv.h      | 3 ++-
+ 4 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/resolv/res_init.c b/resolv/res_init.c
+index e0b6a80..374f644 100644
+--- a/resolv/res_init.c
++++ b/resolv/res_init.c
+@@ -402,6 +402,11 @@ __res_vinit(res_state statp, int preinit) {
+ 		    res_setoptions(statp, buf + sizeof("options") - 1, "conf");
+ 		    continue;
+ 		}
++
++		if (!strncmp(buf, "dnssec-trusted\n", 15)) {
++		    statp->dnssec_trusted = true;
++		    continue;
++		}
+ 	    }
+ 	    statp->nscount = nserv;
+ #ifdef _LIBC
+diff --git a/resolv/res_mkquery.c b/resolv/res_mkquery.c
+index 1635e6a..36c7b4d 100644
+--- a/resolv/res_mkquery.c
++++ b/resolv/res_mkquery.c
+@@ -143,6 +143,8 @@ res_nmkquery(res_state statp,
+ 	hp->opcode = op;
+ 	hp->rd = (statp->options & RES_RECURSE) != 0;
+ 	hp->rcode = NOERROR;
++	if (statp->dnssec_trusted)
++	  hp->ad = 1;
+ 	cp = buf + HFIXEDSZ;
+ 	buflen -= HFIXEDSZ;
+ 	dpp = dnptrs;
+diff --git a/resolv/res_query.c b/resolv/res_query.c
+index 4a9b3b3..ef617df 100644
+--- a/resolv/res_query.c
++++ b/resolv/res_query.c
+@@ -242,6 +242,10 @@ __libc_res_nquery(res_state statp,
+ 	  /* __libc_res_nsend might have reallocated the buffer.  */
+ 	  hp = (HEADER *) *answerp;
+ 
++	/* Clear untrusted AD flag. */
++	if (!statp->dnssec_trusted)
++	  hp->ad = 0;
++
+ 	/* We simplify the following tests by assigning HP to HP2 or
+ 	   vice versa.  It is easy to verify that this is the same as
+ 	   ignoring all tests of HP or HP2.  */
+diff --git a/resolv/resolv.h b/resolv/resolv.h
+index 53c3bba..47286a0 100644
+--- a/resolv/resolv.h
++++ b/resolv/resolv.h
+@@ -117,7 +117,8 @@ struct __res_state {
+ 	unsigned ndots:4;		/* threshold for initial abs. query */
+ 	unsigned nsort:4;		/* number of elements in sort_list[] */
+ 	unsigned ipv6_unavail:1;	/* connecting to IPv6 server failed */
+-	unsigned unused:23;
++	unsigned dnssec_trusted:1;	/* trust AD flag from the server */
++	unsigned unused:22;
+ 	struct {
+ 		struct in_addr	addr;
+ 		u_int32_t	mask;
+-- 
+2.6.3
+
