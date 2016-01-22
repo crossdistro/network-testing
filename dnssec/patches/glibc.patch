@@ -1,14 +1,14 @@
-From 05e57845ff69f5dbf91f104a7d42cf094df72af0 Mon Sep 17 00:00:00 2001
+From 0f4cf605e4a6fb3fd62fb5d7c724d2232db9b782 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Pavel=20=C5=A0imerda?= <psimerda@redhat.com>
 Date: Sun, 16 Nov 2014 00:28:04 +0100
 Subject: [PATCH] only request and accept AD flag when option ad-flag is set
 
 ---
- resolv/res_init.c    | 3 ++-
- resolv/res_mkquery.c | 4 ++++
- resolv/res_query.c   | 4 ++++
- resolv/resolv.h      | 4 ++++
- 4 files changed, 14 insertions(+), 1 deletion(-)
+ resolv/res_init.c    |  3 ++-
+ resolv/res_mkquery.c |  4 ++++
+ resolv/res_send.c    | 10 ++++++++++
+ resolv/resolv.h      |  4 ++++
+ 4 files changed, 20 insertions(+), 1 deletion(-)
 
 diff --git a/resolv/res_init.c b/resolv/res_init.c
 index e0b6a80..f72ab7f 100644
@@ -39,21 +39,27 @@ index 1635e6a..9716010 100644
  	cp = buf + HFIXEDSZ;
  	buflen -= HFIXEDSZ;
  	dpp = dnptrs;
-diff --git a/resolv/res_query.c b/resolv/res_query.c
-index 4a9b3b3..d9d3161 100644
---- a/resolv/res_query.c
-+++ b/resolv/res_query.c
-@@ -242,6 +242,10 @@ __libc_res_nquery(res_state statp,
- 	  /* __libc_res_nsend might have reallocated the buffer.  */
- 	  hp = (HEADER *) *answerp;
+diff --git a/resolv/res_send.c b/resolv/res_send.c
+index a968b95..45cd0e1 100644
+--- a/resolv/res_send.c
++++ b/resolv/res_send.c
+@@ -548,6 +548,16 @@ __libc_res_nsend(res_state statp, const u_char *buf, int buflen,
+ 			  *ansp2, (*resplen2 > *nansp2) ? *nansp2 : *resplen2);
+ 		}
  
-+	/* Clear AD flag unless explicitly trusted using `option ad-flag`. */
-+	if(!(statp->options & RES_AD_FLAG))
-+	  hp->ad = 0;
++		/* Clear AD flag unless explicitly trusted using `option ad-flag`. */
++		if (!(statp->options & RES_AD_FLAG)) {
++		  if (ansp && *ansp)
++		    ((HEADER *) *ansp)->ad = 0;
++		  else
++		    ((HEADER *) &ans)->ad = 0;
++		  if (ansp2 && *ansp2)
++		    ((HEADER *) *ansp2)->ad = 0;
++		}
 +
- 	/* We simplify the following tests by assigning HP to HP2 or
- 	   vice versa.  It is easy to verify that this is the same as
- 	   ignoring all tests of HP or HP2.  */
+ 		/*
+ 		 * If we have temporarily opened a virtual circuit,
+ 		 * or if we haven't been asked to keep a socket open,
 diff --git a/resolv/resolv.h b/resolv/resolv.h
 index 53c3bba..4150a1f 100644
 --- a/resolv/resolv.h
