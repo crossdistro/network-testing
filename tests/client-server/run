@@ -1,162 +1,372 @@
-#!/bin/bash
+#!/usr/bin/python
 
-error() {
-    echo "$@" >&2
-    exit 1
-}
+from __future__ import print_function
 
-prepare() {
-    echo "== $testcase/$scenario =="
-    cd "$dir"
+import os, sys, subprocess
+import collections, functools, itertools
+import logging
+import time
 
-    ns_server=test-server
-    ns_client=test-client
+import ptrace.debugger
+import ptrace.func_call
+import ptrace.syscall
 
-    dev_server=test-server
-    dev_client=test-client
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger('tests')
 
-    export ipv4_server=192.0.2.1/24
-    export ipv6_server=2001:DB8::2:1/64
+class Socket:
+    def __init__(self, fd, domain, socktype, protocol):
+        self.fd = fd
+        self.domain = domain
+        self.socktype = socktype
+        self.protocol = protocol
 
-    export ipv4_client=192.0.2.2/24
-    export ipv6_client=2001:DB8::2:2/64
-}
+    def __str__(self):
+        return "{fd}/{domain.text}/{socktype.text}/{protocol.text}".format(**vars(self))
 
-check_attempted() {
-    local six=""
+class Syscall:
+    def __init__(self, syscall_event, time):
+        self.origin = syscall_event.process.origin
+        self.pid = syscall_event.process.pid
+        self.name = syscall_event.name
+        self.result = syscall_event.result
+        self.arguments = syscall_event.arguments
+        self.time = time
+        self.__string = "[{time:.3f} {origin} {pid}] {format} = {result}".format(format=syscall_event.format(), **vars(self))
 
-    [ "$1" == AF_INET6 ] && six=6
+    def __str__(self):
+        return self.__string
 
-    grep -E "^[0-9]+ +connect\([0-9]+, {sa_family=AF_INET${six}, sin${six}_port=htons\([1-9][0-9]*\)," strace.$scenario.client
-}
+class Property:
+    def __str__(self):
+        return self.template.format(**vars(self))
 
-expect_attempted() {
-    [ "$NOSTRACE" ] && return 0
+class PreferredFamily(Property):
+    template = "Preferred address family is {family}."
 
-    check_attempted "$1" || error "Client was expected to attempt connection using $1 but it didn't."
-}
+    def __init__(self, family):
+        self.family = family
 
-expect_not_attempted() {
-    [ "$NOSTRACE" ] && return 0
+class PreferredLoopbackFamily(PreferredFamily):
+    template = "Preferred loopback address family is {family}."
 
-    check_attempted "$1" && error "Client wasn't expected to attempt connection using $1 but it did."
-}
+class ParallelConnect(Property):
+    def __init__(self, flag):
+        self.method = "Parallel" if flag else "Sequential"
 
-perform() {
-    cleanup
-    trap "cleanup; echo FAIL" INT QUIT TERM EXIT
+    template = "Parallel IPv4/IPv6 connection is used."
 
-    ip netns add $ns_server
-    ip netns add $ns_client
-    ip link add dev $dev_server type veth peer name $dev_client
-    ip link set $dev_server netns $ns_server
-    ip link set $dev_client netns $ns_client
+class Scenario(object):
+    client = server = None
+
+    def __init__(self, testcase):
+        self.namespaces = []
+        self.testcase = testcase
+        self.messages = []
+        self.sockets = {}
+        self.syscalls = []
+        self.listening = set()
+
+    def run(self):
+        self.prepare()
+        try:
+            self.debugger = ptrace.debugger.PtraceDebugger()
+            self.debugger.traceFork()
+            self.started = time.time()
+
+            try:
+                self.server = self.start("server")
+
+                while self.debugger.dict:
+                    #log.debug('-' * 79)
+                    try:
+                        event = self.debugger.waitSyscall()
+                        process = event.process
+                        syscall = Syscall(process.syscall_state.event(ptrace.func_call.FunctionCallOptions()), time.time() - self.started)
+                    except ptrace.debugger.process_event.NewProcessEvent as event:
+                        process = event.process
+                        origin = process.origin = process.parent.origin
+
+                        log.info("[{}] New process: {}".format(origin, process.pid))
+
+                        event.process.parent.syscall()
+                        process.syscall()
+                    except ptrace.debugger.process_event.ProcessExit as event:
+                        process = event.process
+                        origin = process.origin
+
+                        log.debug("[{}] Process exited: {} {}".format(origin, process.pid, event.exitcode))
+                        if process == self.server:
+                            if self.debugger.dict:
+                                self.error("Server returned but there are still processes running.")
+                            if event.exitcode:
+                                self.error("Server returned with non-zero exit code.")
+                        if process == self.client:
+                            if event.exitcode:
+                                self.error("Client returned with non-zero exit code.")
+                            log.info("Client is gone, exiting.")
+                            break;
+                    except ptrace.debugger.ptrace_signal.ProcessSignal:
+                        if event.signum is not None:
+                            process = event.process
+                        else:
+                            log.error("{} signal None announced instead instead of parent signal".format(event.process.pid))
+                            process = event.process.parent
+                        origin = process.origin
+
+                        log.debug("[{}] Signal received: {} {}".format(origin, process.pid, event.signum))
+                        process.syscall()
+                    else:
+                        if syscall.result is not None:
+                            names = ptrace.syscall.SOCKET_SYSCALL_NAMES | set(['close', 'execve', 'fork', 'clone'])
+                            if syscall.name == 'close' and (syscall.pid, syscall.arguments[0].value) not in self.sockets:
+                                process.syscall()
+                                continue
+                            if syscall.name in set(['bind', 'listen', 'connect']):
+                                syscall.socket = self.sockets[syscall.pid, syscall.arguments[0].value]
+                            if syscall.name in names:
+                                log.debug(syscall)
+                                self.syscalls.append(syscall)
+                                if syscall.origin == 'server':
+                                    self.server_syscall(syscall)
+                                elif syscall.origin == 'client':
+                                    self.client_syscall(syscall)
+                                else:
+                                    self.error("Network syscall of unknown origin: {}".format(syscall))
+                        process.syscall()
+            except BaseException as error:
+                self.error("Python exception {} occured: {}".format(type(error), error))
+                raise
+        finally:
+            self.debugger.quit()
+            self.cleanup()
+        self.postprocess()
+
+    def server_syscall(self, syscall):
+        if syscall.name == 'socket':
+            sock = Socket(syscall.result, *syscall.arguments)
+            if sock.fd >= 0:
+                self.sockets[syscall.pid, sock.fd] = sock
+            else:
+                self.error("Server failed to create socket: {}".format(sock))
+        if syscall.name == 'bind':
+            sock = self.sockets[syscall.pid, syscall.arguments[0].value]
+
+            if syscall.result != 0 and sock.domain.text not in self.listening:
+                self.listening.add(sock.domain.text)
+
+                if 'AF_INET' in self.listening and 'AF_INET6' in self.listening:
+                    self.client = self.start('client')
+
+        if syscall.name == 'listen':
+            sock = self.sockets[syscall.pid, syscall.arguments[0].value]
+
+            if sock.domain.text not in self.listening:
+                self.listening.add(sock.domain.text)
+
+                if 'AF_INET' in self.listening and 'AF_INET6' in self.listening:
+                    self.client = self.start('client')
+
+    def client_syscall(self, syscall):
+        if syscall.name == 'socket':
+            sock = Socket(syscall.result, *syscall.arguments)
+            if sock.fd >= 0:
+                self.sockets[syscall.pid, sock.fd] = sock
+            else:
+                self.error("Client failed to create socket: {}".format(sock))
+        if syscall.name == 'close':
+            sock = self.sockets.pop((syscall.pid, syscall.arguments[0].value), None)
+        if syscall.name == 'connect':
+            sock = self.sockets.get((syscall.pid, syscall.arguments[0].value))
+            if syscall.result == 0:
+                if sock.protocol.value != 0:
+                    self.info("Client connected: {} -> {}".format(sock, syscall))
+            else:
+                self.error("Client failed to connect: {} -> {}".format(sock, syscall))
+
+    def start(self, origin):
+        command = self.command(self.testcase.name, origin)
+
+        log.debug("Starting {origin}: {command}".format(**locals()))
+        try:
+            pid = ptrace.debugger.child.createChild(command, False)
+        except ptrace.debugger.child.ChildError:
+            self.info("Script '{}' not found.".format(name))
+            pid = ptrace.debugger.child.createChild(['/bin/true'], False)
+
+        process = self.debugger.addProcess(pid, True)
+        process.origin = origin
+        process.syscall()
+
+        return process
+
+    def client_exited(self):
+        pass
+
+    def error(self, message):
+        self.message(('error', message))
+
+    def info(self, message):
+        self.message(('info', message))
+
+    def __str__(self):
+        return self.name
+
+    def prepare(self):
+        os.environ['NETRESOLVE_BACKENDS'] = 'any|loopback|numerichost|hosts';
+        os.environ['NETRESOLVE_SYSCONFDIR'] = os.getcwd();
+
+    def cleanup(self):
+        for ns in self.namespaces:
+            subprocess.call(['ip', 'netns', 'delete', ns])
+
+    def postprocess(self):
+        pass
+
+    def _add_netns(self, ns):
+        self.namespaces.append(ns)
+        subprocess.call(['/bin/ip', 'netns', 'delete', ns])
+        subprocess.check_call(['/bin/ip', 'netns', 'add', ns])
+        subprocess.check_call(['ip', '-n', ns, 'link', 'set', 'lo', 'up'])
+
+    def _add_veth(self, ns1, ns2):
+        link1, link2 = ns1, ns2
+        subprocess.check_call(['ip', 'link', 'add', 'dev', link1, 'type', 'veth', 'peer', 'name', link2])
+        for ns, link in (ns1, link1), (ns2, link2):
+            subprocess.check_call(['ip', 'link', 'set', link, 'netns', ns, 'up'])
+
+    def _add_address(self, ns, link, address):
+        subprocess.check_call(['ip', '-n', ns, 'address', 'add', address, 'dev', link])
+
+    def message(self, message):
+        self.messages.append(message)
+
+    def report(self):
+        print('    ' + self.name)
+        for message in self.messages:
+            print('      ' + str(message))
+
+    def _connected_families(self):
+        preferred = None
+        fallback = None
+
+        for syscall in self.syscalls:
+            if syscall.origin == 'client' and syscall.name == 'connect':
+                family = syscall.socket.domain.text
+
+                if syscall.arguments[1].text.startswith('<sockaddr_in sin_family=2, sin_port=0,'):
+                    continue
+                if syscall.arguments[1].text.startswith('<sockaddr_in6 sin6_family=10, sin6_port=0, sin6_flowinfo=0L,'):
+                    continue
+
+                if preferred is None:
+                    preferred = family
+                elif fallback is None:
+                    fallback = family
+                else:
+                    self.message(('error', 'Third connection attempt detected.'))
+
+        return preferred, fallback
+
+class LoopbackScenario(Scenario):
+    name = 'loopback'
+
+    def prepare(self):
+        super(self.__class__, self).prepare()
+        os.environ['SOURCE'] = os.environ['DESTINATION'] = 'localhost'
+        self._add_netns('test-loopback')
+
+    def command(self, name, origin):
+        return [
+                '/bin/ip',
+                'netns',
+                'exec',
+                'test-loopback',
+                'wrapresolve',
+                'testcases/{}/{}'.format(name, origin)]
+
+    def postprocess(self):
+        preferred, fallback = self._connected_families()
+
+        self.testcase.properties.append(PreferredLoopbackFamily(preferred))
+
+class DualstackScenario(Scenario):
+    name = 'dualstack-to-dualstack'
+
+    source_ns = 'test-client'
+    destination_ns = 'test-server'
+    source_link, destination_link = source_ns, destination_ns
+    source_config = '192.0.2.1/24', '2001:DB8::2:1/64'
+    destination_config = '192.0.2.2/24', '2001:DB8::2:2/64'
+
+    def prepare(self):
+        super(self.__class__, self).prepare()
+        os.environ['SOURCE'] = 'client.example.net'
+        os.environ['DESTINATION'] = 'server.example.net'
+        for ns in self.source_ns, self.destination_ns:
+            self._add_netns(ns)
+        self._add_veth(self.source_ns, self.destination_ns)
+        for address in self.source_config:
+            self._add_address(self.source_ns, self.source_link, address)
+        for address in self.destination_config:
+            self._add_address(self.destination_ns, self.destination_link, address)
+
+    def command(self, name, origin):
+        return [
+                '/bin/ip',
+                'netns',
+                'exec',
+                'test-{}'.format(origin),
+                'wrapresolve',
+                'testcases/{}/{}'.format(name, origin)]
+
+    def postprocess(self):
+        preferred, fallback = self._connected_families()
+
+        self.testcase.properties.append(PreferredLoopbackFamily(preferred))
+        self.testcase.properties.append(ParallelConnect(fallback == preferred))
 
 
-    ip -n $ns_server link set $dev_server up
-    [ "$ipv4_server" ] && ip -n $ns_server address add $ipv4_server dev $dev_server
-    [ "$ipv6_server" ] && ip -n $ns_server address add $ipv6_server dev $dev_server
+class Testcase:
+    scenario_classes = [LoopbackScenario, DualstackScenario]
 
-    ip -n $ns_client link set $dev_client up
-    [ "$ipv4_client" ] && ip -n $ns_client address add $ipv4_client dev $dev_client
-    [ "$ipv6_client" ] && ip -n $ns_client address add $ipv6_client dev $dev_client
+    def __init__(self, name, scenarios=None):
+        self.name = name
+        self.scenarios = [cls(self) for cls in self.scenario_classes]
+        if scenarios:
+            self.scenarios = [scenario for scenario in self.scenarios if scenario.name in scenarios]
+        self.properties = []
 
-    export NETRESOLVE_BACKENDS="any|loopback|numerichost|hosts"
-    export NETRESOLVE_SYSCONFDIR="`pwd`"
+    def run(self):
+        for scenario in self.scenarios:
+            scenario.run()
 
-    export SOURCE=client.example.net
-    export DESTINATION=server.example.net
+    def report(self):
+        print(self.name)
+        print("  Scenarios:")
+        for scenario in self.scenarios:
+            scenario.report()
+        print("  Properties:")
+        for property in self.properties:
+            print("    {}".format(property))
+        print()
 
-    cd "testcases/$testcase"
+class TestSuite:
+    def __init__(self, testcases=None, scenarios=None):
+        self.testcases = [Testcase(name, scenarios) for name in os.listdir('testcases')]
+        if testcases:
+            self.testcases = [testcase for testcase in self.testcases if testcase.name in testcases]
 
-    local strace=
+    def run(self):
+        for testcase in self.testcases:
+            testcase.run()
 
-    if [ -x ./server ]; then
-        export INTERFACE="$dev_server"
+    def report(self):
+        print()
+        for testcase in self.testcases:
+            testcase.report()
 
-        [ "$NOSTRACE" ] || strace="strace -f -o strace.$scenario.server"
-        ip netns exec $ns_server wrapresolve $strace ./server &
-        sleep 1
-    fi
-    if [ -x ./client ]; then
-        export INTERFACE="$dev_client"
-
-        [ "$NOSTRACE" ] || strace="strace -f -o strace.$scenario.client"
-        time ip netns exec $ns_client wrapresolve $strace ./client || error "Client script failed."
-    fi
-    if [ -x ./server ]; then
-        kill -9 $!
-        wait $!
-    fi
-
-    case $scenario in
-    dualstack-to-dualstack)
-        # Prefer IPv6 connection.
-        expect_not_attempted AF_INET
-        expect_attempted AF_INET6
-        ;;
-    ipv4-to-dualstack)
-        # Prefer IPv4 connection.
-        expect_not_attempted AF_INET6
-        expect_attempted AF_INET
-        ;;
-    dualstack-to-lost-ipv6)
-        # Prefer IPv6 connection, fallback to IPv4 connection.
-        expect_attempted AF_INET6
-        expect_attempted AF_INET
-        ;;
-    esac
-
-    echo "OK"
-}
-
-cleanup() {
-    ip netns delete $ns_server || true
-    ip netns delete $ns_client || true
-
-    trap - INT QUIT TERM EXIT
-}
-
-run() {
-    testcase="$1"
-    scenario="$2"
-
-    prepare
-
-    case $scenario in
-    ipv4-to-dualstack)
-        unset ipv6_client
-        ;;
-    dualstack-to-lost-ipv6)
-        ip netns exec $ns_server ip6tables -A INPUT -j DROP
-        ;;
-    esac
-
-    perform
-}
-
-run_testcase() {
-    run "$1" dualstack-to-dualstack
-    run "$1" ipv4-to-dualstack
-    run "$1" dualstack-to-lost-ipv6
-}
-
-[ "$EUID" == 0 ] || error "The script requires root priviliges. Please run it using 'sudo'."
-
-dir="`pwd`"
-
-case $# in
-0)
-    for testcase in `ls testcases`; do
-        run_testcase "$testcase"
-    done
-    ;;
-1)
-    run_testcase "$1"
-    ;;
-2)
-    run "$1" "$2"
-    ;;
-esac
-
-cleanup
+if __name__ == '__main__':
+    suite = TestSuite(*[arg.split(',') for arg in sys.argv[1:]])
+    suite.run()
+    suite.report()
