@@ -58,6 +58,7 @@ class ParallelConnect(Property):
 
 class Scenario(object):
     client = server = None
+    ip = subprocess.check_output(['which', 'ip']).strip()
 
     def __init__(self, testcase):
         self.namespaces = []
@@ -225,8 +226,8 @@ class Scenario(object):
 
     def _add_netns(self, ns):
         self.namespaces.append(ns)
-        subprocess.call(['/bin/ip', 'netns', 'delete', ns])
-        subprocess.check_call(['/bin/ip', 'netns', 'add', ns])
+        subprocess.call(['ip', 'netns', 'delete', ns])
+        subprocess.check_call(['ip', 'netns', 'add', ns])
         subprocess.check_call(['ip', '-n', ns, 'link', 'set', 'lo', 'up'])
 
     def _add_veth(self, ns1, ns2):
@@ -278,7 +279,7 @@ class LoopbackScenario(Scenario):
 
     def command(self, name, origin):
         return [
-                '/bin/ip',
+                self.ip,
                 'netns',
                 'exec',
                 'test-loopback',
@@ -313,7 +314,7 @@ class DualstackScenario(Scenario):
 
     def command(self, name, origin):
         return [
-                '/bin/ip',
+                self.ip,
                 'netns',
                 'exec',
                 'test-{}'.format(origin),
