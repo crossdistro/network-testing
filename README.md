@@ -7,6 +7,7 @@ Dependencies:
  * Python 2.7
  * python-ptrace
  * netresolve-devel (should be fixed to only require a non-devel package)
+ * iproute2
 
 Run individual test (for netresolve):
 

@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-import os, sys, subprocess
+import os, sys, subprocess, errno
 import collections, functools, itertools
 import logging
 import time
@@ -11,7 +11,7 @@ import ptrace.debugger
 import ptrace.func_call
 import ptrace.syscall
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 log = logging.getLogger('tests')
 
 class Socket:
@@ -38,23 +38,31 @@ class Syscall:
         return self.__string
 
 class Property:
+    def __init__(self, arg):
+        self.arg = arg
+
     def __str__(self):
         return self.template.format(**vars(self))
 
 class PreferredFamily(Property):
-    template = "Preferred address family is {family}."
-
-    def __init__(self, family):
-        self.family = family
+    template = "Preferred address family is {arg}."
 
 class PreferredLoopbackFamily(PreferredFamily):
     template = "Preferred loopback address family is {family}."
 
 class ParallelConnect(Property):
-    def __init__(self, flag):
-        self.method = "Parallel" if flag else "Sequential"
+    template = "Connection method is {method}. {description}"
 
-    template = "Parallel IPv4/IPv6 connection is used."
+    def __init__(self, flag):
+        if flag:
+            self.method = "parallel"
+            self.description = "This is a happy eyeballs style dual-stack connection method resulting in fast fallback when the preferred address family fails silently."
+        else:
+            self.method = "sequential"
+            self.description = "This is a classic dual-stack connection method resulting in a significant timeout when the preferred address family fails silently."
+
+class FallbackDelay(Property):
+    template = "Fallback delay is {arg:.3f}."
 
 class Scenario(object):
     client = server = None
@@ -74,6 +82,8 @@ class Scenario(object):
             self.debugger = ptrace.debugger.PtraceDebugger()
             self.debugger.traceFork()
             self.started = time.time()
+
+            log.info("\n*** {} / {} ***\n".format(self.testcase.name, self.name))
 
             try:
                 self.server = self.start("server")
@@ -101,10 +111,9 @@ class Scenario(object):
                             if self.debugger.dict:
                                 self.error("Server returned but there are still processes running.")
                             if event.exitcode:
-                                self.error("Server returned with non-zero exit code.")
+                                self.info("Server returned with non-zero exit code.")
                         if process == self.client:
-                            if event.exitcode:
-                                self.error("Client returned with non-zero exit code.")
+                            self.error("Client exit code with {}.".format(event.exitcode))
                             log.info("Client is gone, exiting.")
                             break;
                     except ptrace.debugger.ptrace_signal.ProcessSignal:
@@ -182,6 +191,8 @@ class Scenario(object):
             if syscall.result == 0:
                 if sock.protocol.value != 0:
                     self.info("Client connected: {} -> {}".format(sock, syscall))
+            elif syscall.result == -errno.EINPROGRESS:
+                self.info("Client connecting in non-blocking mode.")
             else:
                 self.error("Client failed to connect: {} -> {}".format(sock, syscall))
 
@@ -247,23 +258,21 @@ class Scenario(object):
         for message in self.messages:
             print('      ' + str(message))
 
-    def _connected_families(self):
+    def _connections(self):
         preferred = None
         fallback = None
 
         for syscall in self.syscalls:
             if syscall.origin == 'client' and syscall.name == 'connect':
-                family = syscall.socket.domain.text
-
                 if syscall.arguments[1].text.startswith('<sockaddr_in sin_family=2, sin_port=0,'):
                     continue
                 if syscall.arguments[1].text.startswith('<sockaddr_in6 sin6_family=10, sin6_port=0, sin6_flowinfo=0L,'):
                     continue
 
                 if preferred is None:
-                    preferred = family
+                    preferred = syscall
                 elif fallback is None:
-                    fallback = family
+                    fallback = syscall
                 else:
                     self.message(('error', 'Third connection attempt detected.'))
 
@@ -286,22 +295,17 @@ class LoopbackScenario(Scenario):
                 'wrapresolve',
                 'testcases/{}/{}'.format(name, origin)]
 
-    def postprocess(self):
-        preferred, fallback = self._connected_families()
-
-        self.testcase.properties.append(PreferredLoopbackFamily(preferred))
-
 class DualstackScenario(Scenario):
-    name = 'dualstack-to-dualstack'
+    name = 'dualstack'
 
     source_ns = 'test-client'
     destination_ns = 'test-server'
     source_link, destination_link = source_ns, destination_ns
-    source_config = '192.0.2.1/24', '2001:DB8::2:1/64'
-    destination_config = '192.0.2.2/24', '2001:DB8::2:2/64'
+    destination_config = ['192.0.2.1/24', '2001:DB8::2:1/64']
+    source_config = ['192.0.2.2/24', '2001:DB8::2:2/64']
 
     def prepare(self):
-        super(self.__class__, self).prepare()
+        super(DualstackScenario, self).prepare()
         os.environ['SOURCE'] = 'client.example.net'
         os.environ['DESTINATION'] = 'server.example.net'
         for ns in self.source_ns, self.destination_ns:
@@ -322,14 +326,26 @@ class DualstackScenario(Scenario):
                 'testcases/{}/{}'.format(name, origin)]
 
     def postprocess(self):
-        preferred, fallback = self._connected_families()
+        preferred, fallback = self._connections()
 
-        self.testcase.properties.append(PreferredLoopbackFamily(preferred))
-        self.testcase.properties.append(ParallelConnect(fallback == preferred))
+        log.debug([fallback == preferred])
 
+        self.testcase.properties.append(ParallelConnect(bool(fallback)))
+
+class IP6DroppedScenario(DualstackScenario):
+    name = 'v6dropped'
+
+    def prepare(self):
+        super(IP6DroppedScenario, self).prepare()
+        subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'DROP'])
+
+    def postprocess(self):
+        preferred, fallback = self._connections()
+
+        self.testcase.properties.append(FallbackDelay(fallback.time - preferred.time))
 
 class Testcase:
-    scenario_classes = [LoopbackScenario, DualstackScenario]
+    scenario_classes = [LoopbackScenario, DualstackScenario, IP6DroppedScenario]
 
     def __init__(self, name, scenarios=None):
         self.name = name
