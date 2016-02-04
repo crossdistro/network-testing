@@ -1,3 +1,10 @@
 #!/bin/bash
 
+export NETRESOLVE_SEQUENTIAL_CONNECT=1
+
+echo
+env | grep NETR
+sleep 2
+echo
+
 exec netresolve --connect --node $DESTINATION --service http < <(echo TEST)
