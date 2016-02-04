@@ -4,16 +4,16 @@
 
 Dependencies:
 
+ * Python 2.7
+ * python-ptrace
  * netresolve-devel (should be fixed to only require a non-devel package)
- * libtool (we should get rid of it)
- * strace
 
 Run individual test (for netresolve):
 
-    cd netns-tests
+    cd tests/client-server
     sudo ./run netresolve
 
 Run all tests:
 
-    cd netns-tests
+    cd tests/client-server
     sudo ./run
