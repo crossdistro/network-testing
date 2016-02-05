@@ -1,10 +1,18 @@
 #!/usr/bin/python
 
-import os, socket
+from __future__ import print_function
 
-sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM, socket.IPPROTO_TCP)
-sock.connect(("localhost", int(os.environ.get('DEFAULT_PORT', '80'))))
-sock.send("TEST")
-data = sock.recv(4096)
-print(data)
-sock.shutdown(socket.SHUT_RDWR)
+import os, sys, socket
+
+for family in socket.AF_INET6, socket.AF_INET:
+    sock = socket.socket(family, socket.SOCK_STREAM, socket.IPPROTO_TCP)
+    try:
+        sock.connect((os.environ['DESTINATION'], 80))
+        sock.send("TEST")
+        data = sock.recv(4096)
+        print(data)
+        sock.shutdown(socket.SHUT_RDWR)
+        sock.close()
+        exit(0)
+    except socket.error as error:
+        print(error, file=sys.stderr)

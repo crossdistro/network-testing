@@ -5,10 +5,10 @@ import os, socket, select
 sockets = []
 
 for family in socket.AF_INET, socket.AF_INET6:
-    if family == socket.AF_INET:
-        continue
     sock = socket.socket(family, socket.SOCK_STREAM, socket.IPPROTO_TCP)
-    sock.bind(("0.0.0.0" if family == socket.AF_INET else "::", int(os.environ.get('DEFAULT_PORT', '80'))))
+    if family == socket.AF_INET6:
+        sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+    sock.bind(("0.0.0.0" if family == socket.AF_INET else "::", 80))
     sock.listen(socket.SOMAXCONN)
     sockets.append(sock)
 
