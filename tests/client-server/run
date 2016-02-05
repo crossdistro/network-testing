@@ -227,6 +227,7 @@ class Scenario(object):
     def prepare(self):
         os.environ['NETRESOLVE_BACKENDS'] = 'any|loopback|numerichost|hosts';
         os.environ['NETRESOLVE_SYSCONFDIR'] = os.getcwd();
+        os.environ['DEFAULT_SERVICE'] = 'http'
 
     def cleanup(self):
         for ns in self.namespaces:
