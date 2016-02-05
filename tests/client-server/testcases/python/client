@@ -1,0 +1,10 @@
+#!/usr/bin/python
+
+import os, socket
+
+sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM, socket.IPPROTO_TCP)
+sock.connect(("localhost", int(os.environ.get('DEFAULT_PORT', '80'))))
+sock.send("TEST")
+data = sock.recv(4096)
+print(data)
+sock.shutdown(socket.SHUT_RDWR)
