@@ -343,7 +343,8 @@ class IP6DroppedScenario(DualstackScenario):
     def postprocess(self):
         preferred, fallback = self._connections()
 
-        self.testcase.properties.append(FallbackDelay(fallback.time - preferred.time))
+        if preferred and fallback:
+            self.testcase.properties.append(FallbackDelay(fallback.time - preferred.time))
 
 class Testcase:
     scenario_classes = [LoopbackScenario, DualstackScenario, IP6DroppedScenario]
