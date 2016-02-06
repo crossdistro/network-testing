@@ -16,11 +16,10 @@ logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 log = logging.getLogger('tests')
 
 class Socket:
-    def __init__(self, fd, domain, socktype, protocol):
-        self.fd = fd
-        self.domain = domain
-        self.socktype = socktype
-        self.protocol = protocol
+    def __init__(self, syscall):
+        self.fd = syscall.result
+        self.domain, self.socktype, self.protocol = syscall.arguments
+        self.time = syscall.time
 
     def __str__(self):
         return "{fd}/{domain.text}/{socktype.text}/{protocol.text}".format(**vars(self))
@@ -155,7 +154,7 @@ class Scenario(object):
 
     def server_syscall(self, syscall):
         if syscall.name == 'socket':
-            sock = Socket(syscall.result, *syscall.arguments)
+            sock = Socket(syscall)
             if sock.fd >= 0:
                 self.sockets[syscall.pid, sock.fd] = sock
             else:
@@ -180,7 +179,7 @@ class Scenario(object):
 
     def client_syscall(self, syscall):
         if syscall.name == 'socket':
-            sock = Socket(syscall.result, *syscall.arguments)
+            sock = Socket(syscall)
             if sock.fd >= 0:
                 self.sockets[syscall.pid, sock.fd] = sock
             else:
@@ -345,7 +344,7 @@ class IP6DroppedScenario(DualstackScenario):
         preferred, fallback = self._connections()
 
         if preferred and fallback:
-            self.testcase.properties.append(FallbackDelay(fallback.time - preferred.time))
+            self.testcase.properties.append(FallbackDelay(fallback.socket.time - preferred.socket.time))
 
 class Testcase:
     scenario_classes = [LoopbackScenario, DualstackScenario, IP6DroppedScenario]
