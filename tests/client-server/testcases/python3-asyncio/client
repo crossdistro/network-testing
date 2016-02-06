@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-import os, socket, asyncio
+import os, asyncio
 
 nodename = os.environ['DESTINATION']
 servname = os.environ['DEFAULT_SERVICE']
