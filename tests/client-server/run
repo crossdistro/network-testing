@@ -6,6 +6,7 @@ import os, sys, subprocess, errno
 import collections, functools, itertools
 import logging
 import time
+import argparse
 
 import ptrace.debugger
 import ptrace.func_call
@@ -385,7 +386,22 @@ class TestSuite:
         for testcase in self.testcases:
             testcase.report()
 
-if __name__ == '__main__':
-    suite = TestSuite(*[arg.split(',') for arg in sys.argv[1:]])
-    suite.run()
+def main():
+    parser = argparse.ArgumentParser(description="Test driver for client-server networking applications.")
+    parser.add_argument("--list", "-l", action="store_true", help="List testcases and scenarios.")
+    parser.add_argument("testcases", nargs="?")
+    parser.add_argument("scenarios", nargs="?")
+    options = parser.parse_args()
+
+    testcases = options.testcases and options.testcases
+    scenarios = options.scenarios and options.scenarios
+
+    suite = TestSuite(testcases, scenarios)
+    if not options.list:
+        suite.run()
+    print(suite)
+    print(suite.testcases)
     suite.report()
+
+if __name__ == '__main__':
+    main()
