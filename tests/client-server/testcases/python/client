@@ -4,15 +4,24 @@ from __future__ import print_function
 
 import os, sys, socket
 
-for family in socket.AF_INET6, socket.AF_INET:
-    sock = socket.socket(family, socket.SOCK_STREAM, socket.IPPROTO_TCP)
+nodename = os.environ['DESTINATION']
+servname = os.environ['DEFAULT_SERVICE']
+family = socket.AF_UNSPEC
+socktype = socket.SOCK_STREAM
+protocol = socket.IPPROTO_TCP
+
+for ai in socket.getaddrinfo(nodename, servname, family, socktype, protocol):
+    family, socktype, protocol, canonname, sa = ai
+
     try:
-        sock.connect((os.environ['DESTINATION'], 80))
+        sock = socket.socket(family, socktype, protocol)
+        sock.connect(sa)
         sock.send("TEST")
-        data = sock.recv(4096)
-        print(data)
+        print(sock.recv(4096))
         sock.shutdown(socket.SHUT_RDWR)
         sock.close()
         exit(0)
     except socket.error as error:
         print(error, file=sys.stderr)
+
+exit(1)

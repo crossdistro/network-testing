@@ -2,19 +2,29 @@
 
 import os, socket, select
 
+nodename = None
+servname = os.environ['DEFAULT_SERVICE']
+family = socket.AF_UNSPEC
+socktype = socket.SOCK_STREAM
+protocol = socket.IPPROTO_TCP
+flags = socket.AI_PASSIVE
+
 sockets = []
 
-for family in socket.AF_INET, socket.AF_INET6:
-    sock = socket.socket(family, socket.SOCK_STREAM, socket.IPPROTO_TCP)
+for ai in socket.getaddrinfo(nodename, servname, family, socktype, protocol, flags):
+    family, socktype, protocol, canonname, sa = ai
+
+    sock = socket.socket(family, socktype, protocol)
     if family == socket.AF_INET6:
         sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
-    sock.bind(("0.0.0.0" if family == socket.AF_INET else "::", 80))
+    sock.bind(sa)
     sock.listen(socket.SOMAXCONN)
+
     sockets.append(sock)
 
-r, w, x = select.select(sockets, [], [], 10)
+rfds, wfds, xfds = select.select(sockets, [], [])
 
-for listener in r:
+for listener in rfds:
     sock, address = listener.accept()
-    data = sock.recv(4096)
-    sock.send(data)
+    print(address)
+    sock.send(sock.recv(4096))
