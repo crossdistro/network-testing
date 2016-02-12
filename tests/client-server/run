@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-import os, sys, subprocess, errno
+import os, sys, subprocess, errno, signal
 import collections, functools, itertools
 import logging
 import time
@@ -14,6 +14,17 @@ import ptrace.syscall
 
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 log = logging.getLogger('tests')
+
+class Timeout(Exception):
+    def __init__(self, timeout):
+        self.timeout = timeout
+        signal.signal(signal.SIGALRM, self.handler)
+        signal.alarm(timeout)
+
+    def handler(self, signum, frame):
+        log.error("Timeout occured.")
+        signal.alarm(0)
+        raise self
 
 #
 # Patch python-ptrace on the fly
@@ -114,13 +125,15 @@ class FallbackDelay(Property):
 class Scenario(object):
     client = server = None
 
-    def __init__(self, testcase):
-        self.namespaces = []
+    def __init__(self, testcase, options):
         self.testcase = testcase
+        self.options = options
+        self.namespaces = []
         self.messages = []
         self.sockets = {}
         self.syscalls = []
         self.listening = set()
+        self.properties = []
 
     def run(self):
         self.prepare()
@@ -186,6 +199,8 @@ class Scenario(object):
                                 else:
                                     self.error("Network syscall of unknown origin: {}".format(syscall))
                         process.syscall()
+            except Timeout as error:
+                self.error("Client run time didn't fit into limit of {} seconds.".format(error.timeout))
             except BaseException as error:
                 self.error("Python exception {} occured: {}".format(type(error), error))
                 raise
@@ -218,6 +233,7 @@ class Scenario(object):
 
                 if 'AF_INET' in self.listening and 'AF_INET6' in self.listening:
                     self.client = self.start('client')
+                    Timeout(int(self.options.client_timeout))
 
     def client_syscall(self, syscall):
         if syscall.name == 'socket':
@@ -258,6 +274,7 @@ class Scenario(object):
         pass
 
     def error(self, message):
+        log.error(message)
         self.message(('error', message))
 
     def info(self, message):
@@ -373,7 +390,7 @@ class DualstackScenario(Scenario):
 
         log.debug([fallback == preferred])
 
-        self.testcase.properties.append(ParallelConnect(bool(fallback)))
+        self.properties.append(ParallelConnect(bool(fallback)))
 
 class IP6DroppedScenario(DualstackScenario):
     name = 'v6dropped'
@@ -386,17 +403,16 @@ class IP6DroppedScenario(DualstackScenario):
         preferred, fallback = self._connections()
 
         if preferred and fallback:
-            self.testcase.properties.append(FallbackDelay(fallback.socket.time - preferred.socket.time))
+            self.properties.append(FallbackDelay(fallback.socket.time - preferred.socket.time))
 
 class Testcase:
     scenario_classes = [LoopbackScenario, DualstackScenario, IP6DroppedScenario]
 
-    def __init__(self, name, scenarios=None):
+    def __init__(self, name, scenarios, options):
         self.name = name
-        self.scenarios = [cls(self) for cls in self.scenario_classes]
+        self.scenarios = [cls(self, options) for cls in self.scenario_classes]
         if scenarios:
             self.scenarios = [scenario for scenario in self.scenarios if scenario.name in scenarios]
-        self.properties = []
 
     def run(self):
         for scenario in self.scenarios:
@@ -408,13 +424,13 @@ class Testcase:
         for scenario in self.scenarios:
             scenario.report()
         print("  Properties:")
-        for property in self.properties:
+        for property in sum((scenario.properties for scenario in self.scenarios), []):
             print("    {}".format(property))
         print()
 
 class TestSuite:
-    def __init__(self, testcases=None, scenarios=None):
-        self.testcases = [Testcase(name, scenarios) for name in os.listdir('testcases')]
+    def __init__(self, testcases, scenarios, options):
+        self.testcases = [Testcase(name, scenarios, options) for name in os.listdir('testcases')]
         if testcases:
             self.testcases = [testcase for testcase in self.testcases if testcase.name in testcases]
 
@@ -430,6 +446,7 @@ class TestSuite:
 def main():
     parser = argparse.ArgumentParser(description="Test driver for client-server networking applications.")
     parser.add_argument("--list", "-l", action="store_true", help="List testcases and scenarios.")
+    parser.add_argument("--client-timeout", default="20", help="List testcases and scenarios.")
     parser.add_argument("testcases", nargs="?")
     parser.add_argument("scenarios", nargs="?")
     options = parser.parse_args()
@@ -437,7 +454,7 @@ def main():
     testcases = options.testcases and options.testcases
     scenarios = options.scenarios and options.scenarios
 
-    suite = TestSuite(testcases, scenarios)
+    suite = TestSuite(testcases, scenarios, options)
     if not options.list:
         suite.run()
     print(suite)
