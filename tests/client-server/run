@@ -116,16 +116,12 @@ class Scenario(object):
                             self.error("Client exit code with {}.".format(event.exitcode))
                             log.info("Client is gone, exiting.")
                             break;
-                    except ptrace.debugger.ptrace_signal.ProcessSignal:
-                        if event.signum is not None:
-                            process = event.process
-                        else:
-                            log.error("{} signal None announced instead instead of parent signal".format(event.process.pid))
-                            process = event.process.parent
+                    except ptrace.debugger.ptrace_signal.ProcessSignal as event:
+                        process = event.process
                         origin = process.origin
-
                         log.debug("[{}] Signal received: {} {}".format(origin, process.pid, event.signum))
-                        process.syscall()
+
+                        process.syscall(event.signum & ~0x80)
                     else:
                         if syscall.result is not None:
                             names = ptrace.syscall.SOCKET_SYSCALL_NAMES | set(['close', 'execve', 'fork', 'clone'])
