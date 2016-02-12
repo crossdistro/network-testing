@@ -8,4 +8,4 @@ dhcpcd $INTERFACE --debug --script ./script
 
 ping -q -c1 $DESTINATION
 
-dhcpcd -k $INTERFACE
+exec dhcpcd -k $INTERFACE
