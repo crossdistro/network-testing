@@ -24,7 +24,8 @@ def patch(module):
         setattr(module, new.__name__, new)
     return _patch
 
-# Change execve/execv to execvpe/execvp
+# Change execve/execv to execvpe/execvp so that executed programs
+# are found easily.
 @patch(ptrace.debugger.child)
 def _execChild(arguments, no_stdout, env):
     if no_stdout:
@@ -43,6 +44,19 @@ def _execChild(arguments, no_stdout, env):
             os.execvp(arguments[0], arguments)
     except Exception as err:
         raise ptrace.debugger.child.ChildError(str(err))
+
+# Change process status formatter to understand exitcode
+# correctly.
+@patch(ptrace.process_tools)
+def formatProcessStatus(exitcode, title="Process"):
+    """
+    Format a process status (integer) as a string.
+    """
+    if exitcode:
+        text = "%s exited with code %s" % (title, exitcode)
+    else:
+        text = "%s exited normally" % title
+    return text
 
 #
 #
