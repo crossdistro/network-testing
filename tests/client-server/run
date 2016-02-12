@@ -198,8 +198,8 @@ class Scenario(object):
         log.debug("Starting {origin}: {command}".format(**locals()))
         try:
             pid = ptrace.debugger.child.createChild(command, False)
-        except ptrace.debugger.child.ChildError:
-            self.info("Script '{}' not found.".format(name))
+        except ptrace.debugger.child.ChildError as error:
+            self.info("Could not run Script '{}': {}".format(origin, error))
             pid = ptrace.debugger.child.createChild(['/bin/true'], False)
 
         process = self.debugger.addProcess(pid, True)
