@@ -21,24 +21,31 @@ class Timeout(Exception):
         signal.signal(signal.SIGALRM, self.handler)
         signal.alarm(timeout)
 
+    @staticmethod
+    def reset():
+        signal.alarm(0)
+
     def handler(self, signum, frame):
         log.error("Timeout occured.")
-        signal.alarm(0)
+        self.reset()
         raise self
 
 #
 # Patch python-ptrace on the fly
 #
 
-def patch(module):
-    def _patch(new):
-        setattr(module, new.__name__, new)
+def patch(ns):
+    def _patch(func):
+        orig = getattr(ns, func.__name__)
+        def new(*args, **kargs):
+            return func(orig, *args, **kargs)
+        setattr(ns, func.__name__, new)
     return _patch
 
 # Change execve/execv to execvpe/execvp so that executed programs
 # are found easily.
 @patch(ptrace.debugger.child)
-def _execChild(arguments, no_stdout, env):
+def _execChild(orig, arguments, no_stdout, env):
     if no_stdout:
         try:
             null = open(devnull, 'wb')
@@ -59,7 +66,7 @@ def _execChild(arguments, no_stdout, env):
 # Change process status formatter to understand exitcode
 # correctly.
 @patch(ptrace.process_tools)
-def formatProcessStatus(exitcode, title="Process"):
+def formatProcessStatus(orig, exitcode, title="Process"):
     """
     Format a process status (integer) as a string.
     """
@@ -68,6 +75,18 @@ def formatProcessStatus(exitcode, title="Process"):
     else:
         text = "%s exited normally" % title
     return text
+
+# Ignore specific PtraceProcess errors when terminating process.
+import ptrace.debugger.process
+@patch(ptrace.debugger.process.PtraceProcess)
+def terminate(orig, self, *args, **kargs):
+    try:
+        orig(self, *args, **kargs)
+    except ptrace.error.PtraceError as error:
+        if error.errno == 3:
+            log.error("Ptrace exception during 'PtraceProcess.terimate()': {}".format(error))
+        else:
+            raise
 
 #
 #
@@ -122,6 +141,11 @@ class ParallelConnect(Property):
 class FallbackDelay(Property):
     template = "Fallback delay is {arg:.3f}."
 
+
+class DebuggerProcess(ptrace.debugger.PtraceDebugger):
+    
+
+
 class Scenario(object):
     client = server = None
 
@@ -172,8 +196,10 @@ class Scenario(object):
                             if event.exitcode:
                                 self.info("Server returned with non-zero exit code.")
                         if process == self.client:
-                            self.error("Client exit code with {}.".format(event.exitcode))
+                            if event.exitcode:
+                                self.error("Client exit code with {}.".format(event.exitcode))
                             log.info("Client is gone, exiting.")
+                            Timeout.reset()
                             break;
                     except ptrace.debugger.ptrace_signal.ProcessSignal as event:
                         process = event.process
