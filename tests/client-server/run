@@ -15,6 +15,39 @@ import ptrace.syscall
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 log = logging.getLogger('tests')
 
+#
+# Patch python-ptrace on the fly
+#
+
+def patch(module):
+    def _patch(new):
+        setattr(module, new.__name__, new)
+    return _patch
+
+# Change execve/execv to execvpe/execvp
+@patch(ptrace.debugger.child)
+def _execChild(arguments, no_stdout, env):
+    if no_stdout:
+        try:
+            null = open(devnull, 'wb')
+            os.dup2(null.fileno(), 1)
+            os.dup2(1, 2)
+            null.close()
+        except IOError as err:
+            os.close(2)
+            os.close(1)
+    try:
+        if env is not None:
+            os.execvpe(arguments[0], arguments, env)
+        else:
+            os.execvp(arguments[0], arguments)
+    except Exception as err:
+        raise ptrace.debugger.child.ChildError(str(err))
+
+#
+#
+#
+
 class Socket:
     def __init__(self, syscall):
         self.fd = syscall.result
@@ -66,7 +99,6 @@ class FallbackDelay(Property):
 
 class Scenario(object):
     client = server = None
-    ip = subprocess.check_output(['which', 'ip']).strip()
 
     def __init__(self, testcase):
         self.namespaces = []
@@ -285,7 +317,7 @@ class LoopbackScenario(Scenario):
 
     def command(self, name, origin):
         return [
-                self.ip,
+                'ip',
                 'netns',
                 'exec',
                 'test-loopback',
@@ -315,7 +347,7 @@ class DualstackScenario(Scenario):
 
     def command(self, name, origin):
         return [
-                self.ip,
+                'ip',
                 'netns',
                 'exec',
                 'test-{}'.format(origin),
