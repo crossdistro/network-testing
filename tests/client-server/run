@@ -3,10 +3,12 @@
 from __future__ import print_function
 
 import os, sys, subprocess, errno, signal
+import multiprocessing.queues
 import collections, functools, itertools
 import logging
 import time
 import argparse
+import traceback
 
 import ptrace.debugger
 import ptrace.func_call
@@ -15,104 +17,42 @@ import ptrace.syscall
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 log = logging.getLogger('tests')
 
-class Timeout(Exception):
-    def __init__(self, timeout):
-        self.timeout = timeout
-        signal.signal(signal.SIGALRM, self.handler)
-        signal.alarm(timeout)
+import patch
 
-    @staticmethod
-    def reset():
-        signal.alarm(0)
+class Data(object):
+    def __str__(self):
+        return self.template.format(**vars(self))
 
-    def handler(self, signum, frame):
-        log.error("Timeout occured.")
-        self.reset()
-        raise self
+    def __repr__(self):
+        return repr(str(self))
 
-#
-# Patch python-ptrace on the fly
-#
+class Socket(Data):
+    template = "{fd}/{domain.text}/{socktype.text}/{protocol.text}"
 
-def patch(ns):
-    def _patch(func):
-        orig = getattr(ns, func.__name__)
-        def new(*args, **kargs):
-            return func(orig, *args, **kargs)
-        setattr(ns, func.__name__, new)
-    return _patch
-
-# Change execve/execv to execvpe/execvp so that executed programs
-# are found easily.
-@patch(ptrace.debugger.child)
-def _execChild(orig, arguments, no_stdout, env):
-    if no_stdout:
-        try:
-            null = open(devnull, 'wb')
-            os.dup2(null.fileno(), 1)
-            os.dup2(1, 2)
-            null.close()
-        except IOError as err:
-            os.close(2)
-            os.close(1)
-    try:
-        if env is not None:
-            os.execvpe(arguments[0], arguments, env)
-        else:
-            os.execvp(arguments[0], arguments)
-    except Exception as err:
-        raise ptrace.debugger.child.ChildError(str(err))
-
-# Change process status formatter to understand exitcode
-# correctly.
-@patch(ptrace.process_tools)
-def formatProcessStatus(orig, exitcode, title="Process"):
-    """
-    Format a process status (integer) as a string.
-    """
-    if exitcode:
-        text = "%s exited with code %s" % (title, exitcode)
-    else:
-        text = "%s exited normally" % title
-    return text
-
-# Ignore specific PtraceProcess errors when terminating process.
-import ptrace.debugger.process
-@patch(ptrace.debugger.process.PtraceProcess)
-def terminate(orig, self, *args, **kargs):
-    try:
-        orig(self, *args, **kargs)
-    except ptrace.error.PtraceError as error:
-        if error.errno == 3:
-            log.error("Ptrace exception during 'PtraceProcess.terimate()': {}".format(error))
-        else:
-            raise
-
-#
-#
-#
-
-class Socket:
     def __init__(self, syscall):
         self.fd = syscall.result
         self.domain, self.socktype, self.protocol = syscall.arguments
         self.time = syscall.time
 
-    def __str__(self):
-        return "{fd}/{domain.text}/{socktype.text}/{protocol.text}".format(**vars(self))
+class Argument:
+    template = "{name} = {value} ({text})"
+
+    def __init__(self, arg):
+        self.name = arg.name
+        self.value = arg.value
+        self.text = arg.text
 
 class Syscall:
-    def __init__(self, syscall_event, time):
-        self.origin = syscall_event.process.origin
+    template = "[{timestamp:.3f} {origin} {pid}] {info} = {result}"
+
+    def __init__(self, debugger_process, syscall_event):
+        self.origin = debugger_process.name
         self.pid = syscall_event.process.pid
         self.name = syscall_event.name
         self.result = syscall_event.result
-        self.arguments = syscall_event.arguments
-        self.time = time
-        self.__string = "[{time:.3f} {origin} {pid}] {format} = {result}".format(format=syscall_event.format(), **vars(self))
-
-    def __str__(self):
-        return self.__string
+        self.arguments = [Argument(arg) for arg in syscall_event.arguments]
+        self.timestamp = time.time()
+        self.info = syscall_event.format()
 
 class Property:
     def __init__(self, arg):
@@ -120,6 +60,108 @@ class Property:
 
     def __str__(self):
         return self.template.format(**vars(self))
+
+class DebuggerProcess(multiprocessing.Process):
+    def __init__(self, name, command, queue):
+        log.debug("Created debugger: {}".format(command))
+        super(DebuggerProcess, self).__init__(name=name)
+        self.q = queue
+        self.__command = command
+        #self.__command = ['ip', 'netns', 'exec', 'test-loopback', 'wrapresolve', 'testcases/netresolve/client']
+
+    def run(self):
+        debugger = ptrace.debugger.PtraceDebugger()
+
+        try:
+            debugger.traceFork()
+            debugger.traceExec()
+            self.__process = debugger.addProcess(ptrace.debugger.child.createChild(self.__command, False), True)
+            self.__process.syscall()
+            self.__started = time.time()
+
+            log.debug("Debugging processes: pid={} dict={}".format(self.__process.pid, debugger.dict))
+
+            while debugger.dict:
+                try:
+                    event = debugger.waitSyscall()
+                    #event.display()
+                except ptrace.debugger.process_event.ProcessExit as event:
+                    process = event.process
+                    #origin = process.origin
+
+                    log.debug("[{}] Process exited: {} {}".format(self.name, process.pid, event.exitcode))
+                    continue
+    #                #if process == self.server:
+    #                    if debugger.dict:
+    #                        self.error("Server returned but there are still processes running.")
+    #                    if event.exitcode:
+    #                        self.info("Server returned with non-zero exit code.")
+    #                if process == self.client:
+    #                    if event.exitcode:
+    #                        self.error("Client exit code with {}.".format(event.exitcode))
+    #                    log.info("Client is gone, exiting.")
+    #                    break;
+                except ptrace.debugger.ProcessSignal as event:
+                    process = event.process
+                    event.display()
+                    if event.signum & 0x80:
+                        raise
+                    process.syscall(event.signum)
+                    continue
+    #            else:
+    #                if syscall.result is not None:
+    #                    names = ptrace.syscall.SOCKET_SYSCALL_NAMES | set(['close', 'execve', 'fork', 'clone'])
+    #                    if syscall.name == 'close' and (syscall.pid, syscall.arguments[0].value) not in self.sockets:
+    #                        process.syscall()
+    #                        continue
+    #                    if syscall.name in set(['bind', 'listen', 'connect']):
+    #                        syscall.socket = self.sockets[syscall.pid, syscall.arguments[0].value]
+    #                    if syscall.name in names:
+    #                        log.debug(syscall)
+    #                        self.syscalls.append(syscall)
+    #                        if syscall.origin == 'server':
+    #                            self.server_syscall(syscall)
+    #                        elif syscall.origin == 'client':
+    #                            self.client_syscall(syscall)
+    #                        else:
+    #                            self.error("Network syscall of unknown origin: {}".format(syscall))
+    #                process.syscall()
+    #    except BaseException as error:
+    #        self.error("Python exception {} occured: {}".format(type(error), error))
+    #        raise
+                except ptrace.debugger.process_event.NewProcessEvent as event:
+                    process = event.process
+                    #origin = process.origin = process.parent.origin
+
+                    log.info("[{}] New process: {}".format(self.name, process.pid))
+
+                    process.parent.syscall()
+                    process.syscall()
+                    continue
+                except ptrace.debugger.process_event.ProcessExecution as event:
+                    process = event.process
+                    #origin = process.origin = process.parent.origin
+
+                    log.info(event)
+
+                    process.syscall()
+                    continue
+
+                process = event.process
+
+                syscall = Syscall(self, process.syscall_state.event(ptrace.func_call.FunctionCallOptions()))
+                #log.debug(syscall)
+                self.q.put((self.name, syscall))
+
+                process.syscall()
+        except BaseException as error:
+            log.error(error)
+            raise
+        finally:
+            log.debug("Debugged processes: pid={} dict={}".format(self.__process.pid, debugger.dict))
+            debugger.quit()
+            self.q.put((self.name, None))
+    #self.cleanup()
 
 class PreferredFamily(Property):
     template = "Preferred address family is {arg}."
@@ -141,13 +183,11 @@ class ParallelConnect(Property):
 class FallbackDelay(Property):
     template = "Fallback delay is {arg:.3f}."
 
-
-class DebuggerProcess(ptrace.debugger.PtraceDebugger):
-    
-
-
 class Scenario(object):
     client = server = None
+
+    class _Timeout(Exception):
+        pass
 
     def __init__(self, testcase, options):
         self.testcase = testcase
@@ -159,17 +199,56 @@ class Scenario(object):
         self.listening = set()
         self.properties = []
 
+    def _wait(self):
+        now = time.time()
+        if now > self.deadline:
+            raise self._Timeout()
+        message = self.queue.get(self.deadline - now)
+        self.syscalls.append(message)
+        return message
+
+    def wait(self, origin=None, syscall=None):
+        while True:
+            o, s = self._wait()
+            if o != origin.name:
+                continue
+            if s is None:
+                break
+            if s.name == syscall:
+                break
+        return o, s
+
     def run(self):
         self.prepare()
+        self.queue = multiprocessing.Queue()
+        self.server = DebuggerProcess("server", self.command(self.testcase.name, "server"), self.queue)
+        self.client = DebuggerProcess("client", self.command(self.testcase.name, "client"), self.queue)
+
+        self.deadline = time.time() + 2
+
         try:
-            self.debugger = ptrace.debugger.PtraceDebugger()
-            self.debugger.traceFork()
-            self.started = time.time()
+            self.server.start()
+            self.wait(self.server, "listen")
+            self.wait(self.server, "listen")
+
+            self.client.start()
+            self.wait(self.client)
+        except self._Timeout:
+            pass
+        finally:
+            for process in (self.client, self.server):
+                process.terminate()
+                process.join()
+
+        log.debug('**********************')
+        [print(i) for i in self.syscalls]
+        log.debug('**********************')
+        sys.exit(0)
+        try:
 
             log.info("\n*** {} / {} ***\n".format(self.testcase.name, self.name))
 
             try:
-                self.server = self.start("server")
 
                 while self.debugger.dict:
                     #log.debug('-' * 79)
@@ -199,14 +278,13 @@ class Scenario(object):
                             if event.exitcode:
                                 self.error("Client exit code with {}.".format(event.exitcode))
                             log.info("Client is gone, exiting.")
-                            Timeout.reset()
                             break;
                     except ptrace.debugger.ptrace_signal.ProcessSignal as event:
                         process = event.process
                         origin = process.origin
                         log.debug("[{}] Signal received: {} {}".format(origin, process.pid, event.signum))
 
-                        process.syscall(event.signum & ~0x80)
+                        process.syscall(event.signum)
                     else:
                         if syscall.result is not None:
                             names = ptrace.syscall.SOCKET_SYSCALL_NAMES | set(['close', 'execve', 'fork', 'clone'])
@@ -225,8 +303,6 @@ class Scenario(object):
                                 else:
                                     self.error("Network syscall of unknown origin: {}".format(syscall))
                         process.syscall()
-            except Timeout as error:
-                self.error("Client run time didn't fit into limit of {} seconds.".format(error.timeout))
             except BaseException as error:
                 self.error("Python exception {} occured: {}".format(type(error), error))
                 raise
@@ -259,7 +335,6 @@ class Scenario(object):
 
                 if 'AF_INET' in self.listening and 'AF_INET6' in self.listening:
                     self.client = self.start('client')
-                    Timeout(int(self.options.client_timeout))
 
     def client_syscall(self, syscall):
         if syscall.name == 'socket':
@@ -281,7 +356,8 @@ class Scenario(object):
                 self.error("Client failed to connect: {} -> {}".format(sock, syscall))
 
     def start(self, origin):
-        command = self.command(self.testcase.name, origin)
+        return DebuggerProcess(origin, self.command(self.testcase.name, origin))
+
 
         log.debug("Starting {origin}: {command}".format(**locals()))
         try:
