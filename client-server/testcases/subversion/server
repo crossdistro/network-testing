@@ -1,0 +1,9 @@
+#!/bin/sh
+
+repodir="/run/network-testing/subversion"
+
+mkdir -p "$repodir"
+cd "$repodir"
+svnadmin create repo
+
+exec svnserve --daemon --foreground --root "`pwd`"
