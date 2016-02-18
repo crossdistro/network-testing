@@ -142,11 +142,14 @@ class Scenario(object):
 
                 process.syscall()
 
+    def set_timeout(self, timeout):
+        self.debugger.deadline = time.time() + timeout
 
     def run(self):
         self.prepare()
         try:
             self.debugger = ptrace.debugger.PtraceDebugger()
+            self.debugger.deadline = None
             self.debugger.traceFork()
             self.started = time.time()
 
@@ -154,11 +157,16 @@ class Scenario(object):
 
             try:
                 self.server = self.start("server")
+                self.set_timeout(35)
                 self.wait("server", "listen")
+                self.set_timeout(5)
                 self.wait("server", "listen")
 
                 self.client = self.start('client')
+                self.set_timeout(20)
                 self.wait()
+            except patch.Timeout:
+                self.message("Timeout occured.")
             except BaseException as error:
                 self.error("Python exception {} occured: {}".format(type(error), error))
                 raise
