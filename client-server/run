@@ -406,14 +406,12 @@ def main():
     parser.add_argument("scenarios", nargs="?")
     options = parser.parse_args()
 
-    testcases = options.testcases and options.testcases
-    scenarios = options.scenarios and options.scenarios
+    testcases = options.testcases and options.testcases.split(',')
+    scenarios = options.scenarios and options.scenarios.split(',')
 
     suite = TestSuite(testcases, scenarios)
     if not options.list:
         suite.run()
-    print(suite)
-    print(suite.testcases)
     suite.report()
 
 if __name__ == '__main__':
