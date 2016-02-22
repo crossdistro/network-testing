@@ -4,41 +4,19 @@ from __future__ import print_function
 
 import os, sys, subprocess, errno
 import collections, functools, itertools
-import logging
-import time
 import argparse
 import socket
+import re
 
+import debug
 import ptrace.debugger
-import ptrace.func_call
-import ptrace.syscall
 
+import logging
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 log = logging.getLogger('tests')
 
-import patch
-
-class Socket:
-    def __init__(self, syscall):
-        self.fd = syscall.result
-        self.domain, self.socktype, self.protocol = syscall.arguments
-        self.time = syscall.time
-
-    def __str__(self):
-        return "{fd}/{domain.text}/{socktype.text}/{protocol.text}".format(**vars(self))
-
-class Event:
-    def __init__(self, syscall_event, time):
-        self.origin = syscall_event.process.origin
-        self.pid = syscall_event.process.pid
-        self.name = syscall_event.name
-        self.result = syscall_event.result
-        self.arguments = syscall_event.arguments
-        self.time = time
-        self.__string = "[{time:.3f} {origin} {pid}] {format} = {result}".format(format=syscall_event.format(), **vars(self))
-
-    def __str__(self):
-        return self.__string
+SOCKET_OPERATIONS = set(['bind', 'listen', 'accept', 'connect', 'getsockopt', 'shutdown', 'close'])
+PROCESS_SYSCALLS = set(['close', 'execve', 'fork', 'clone'])
 
 class Property:
     def __init__(self, arg):
@@ -55,6 +33,12 @@ class IP4Listening(Property):
 
 class IP6Listening(Property):
     template = "Listening on IPv6: {arg}"
+
+class IP4Connected(Property):
+    template = "Connected using IPv4: {arg}"
+
+class IP6Connected(Property):
+    template = "Connected using IPv6: {arg}"
 
 class PreferredFamily(Property):
     template = "Preferred address family is {arg}."
@@ -84,161 +68,104 @@ class Scenario(object):
         self.namespaces = []
         self.testcase = testcase
         self.messages = []
-        self.sockets = {}
-        self.events = []
 
-    def wait(self, origin=None, syscall=None):
-        while self.debugger.dict:
-            try:
-                process = self.debugger.waitSyscall().process
-                event = Event(process.syscall_state.event(ptrace.func_call.FunctionCallOptions()), time.time() - self.started)
-            except ptrace.debugger.process_event.NewProcessEvent as event:
-                process = event.process
-                origin = process.origin = process.parent.origin
-
-                log.info("[{}] New process: {}".format(origin, process.pid))
-
-                event.process.parent.syscall()
-                process.syscall()
-            except ptrace.debugger.process_event.ProcessExit as event:
-                process = event.process
-                origin = process.origin
-
-                log.debug("[{}] Process exited: {} {}".format(origin, process.pid, event.exitcode))
-                if process == self.server:
-                    if self.debugger.dict:
-                        self.message("Server returned but there are still processes running.")
-                    if event.exitcode:
-                        self.message("Server returned with non-zero exit code.")
-                if process == self.client:
-                    self.message("Client exit code is {}.".format(event.exitcode))
-                    log.info("Client is gone, exiting.")
-                    break;
-            except ptrace.debugger.ptrace_signal.ProcessSignal as event:
-                process = event.process
-                origin = process.origin
-                log.debug("[{}] Signal received: {} {}".format(origin, process.pid, event.signum))
-
-                process.syscall(event.signum & ~0x80)
-            else:
-                if event.result is not None:
-                    names = ptrace.syscall.SOCKET_SYSCALL_NAMES | set(['close', 'execve', 'fork', 'clone'])
-                    if event.name == 'close':
-                        if not self.sockets.pop((event.pid, event.arguments[0].value), None):
-                            process.syscall()
-                            continue
-                    if event.name in set(['bind', 'listen', 'connect']):
-                        event.socket = self.sockets[event.pid, event.arguments[0].value]
-                    if event.name in names:
-                        log.debug(event)
-                        self.events.append(event)
-                        if event.origin == 'server':
-                            self.server_syscall(event)
-                        elif event.origin == 'client':
-                            self.client_syscall(event)
-                    if event.origin == origin and event.name == syscall:
-                        process.syscall()
-                        return event
-
-                process.syscall()
-
-    def set_timeout(self, timeout):
-        self.debugger.deadline = time.time() + timeout
+    def __str__(self):
+        return self.name
 
     def run(self):
+        debugger = debug.SyscallDebugger()
+
+        # Run entities and collect syscalls.
         self.prepare()
         try:
-            self.debugger = ptrace.debugger.PtraceDebugger()
-            self.debugger.deadline = None
-            self.debugger.traceFork()
-            self.started = time.time()
-
             log.info("\n*** {} / {} ***\n".format(self.testcase.name, self.name))
 
             try:
-                self.server = self.start("server")
-                self.set_timeout(35)
-                self.wait("server", "listen")
-                self.set_timeout(5)
-                self.wait("server", "listen")
+                self.server = self.start(debugger, "server")
+                debugger.set_timeout(35)
+                debugger.wait("server", "listen")
+                debugger.set_timeout(5)
+                debugger.wait("server", "listen")
 
-                self.client = self.start('client')
-                self.set_timeout(20)
-                self.wait()
-            except patch.Timeout:
+                self.client = self.start(debugger, "client")
+                debugger.set_timeout(20)
+                debugger.wait()
+            except debug.Timeout:
                 self.message("Timeout occured.")
             except BaseException as error:
                 self.message("Python exception {} occured: {}".format(type(error), error))
                 raise
         finally:
-            self.debugger.quit()
+            debugger.quit()
             self.cleanup()
+
+        self.events = debugger.events
+        del debugger
+
+        # Process collected devents.
+        for event in self.events:
+            if event.origin == 'server':
+                self.server_event(event)
+            if event.origin == 'client':
+                self.client_event(event)
+
+        # Postprocess acquired data.
         self.postprocess()
 
-    def server_syscall(self, syscall):
-        if syscall.name == 'socket':
-            sock = Socket(syscall)
-            if sock.fd >= 0:
-                self.sockets[syscall.pid, sock.fd] = sock
-            else:
-                self.message("Server failed to create socket: {}".format(sock))
-        if syscall.name == 'bind':
-            sock = self.sockets[syscall.pid, syscall.arguments[0].value]
-
-            if syscall.result != 0 and sock.domain.text not in self.listening:
-                self.listening.add(sock.domain.text)
-
-                if 'AF_INET' in self.listening and 'AF_INET6' in self.listening:
-                    self.client = self.start('client')
-
-        if syscall.name == 'listen':
-            sock = self.sockets[syscall.pid, syscall.arguments[0].value]
-
-            if sock.domain.value == socket.AF_INET:
-                self.message(IP4Listening(True))
-            elif sock.domain.value == socket.AF_INET6:
-                self.message(IP6Listening(True))
-
-    def client_syscall(self, syscall):
-        if syscall.name == 'socket':
-            sock = Socket(syscall)
-            if sock.fd >= 0:
-                self.sockets[syscall.pid, sock.fd] = sock
-            else:
-                self.message("Client failed to create socket: {}".format(sock))
-        if syscall.name == 'close':
-            sock = self.sockets.pop((syscall.pid, syscall.arguments[0].value), None)
-        if syscall.name == 'connect':
-            sock = self.sockets.get((syscall.pid, syscall.arguments[0].value))
-            if syscall.result == 0:
-                if sock.protocol.value != 0:
-                    self.info("Client connected: {} -> {}".format(sock, syscall))
-            elif syscall.result == -errno.EINPROGRESS:
-                self.message("Client connecting in non-blocking mode.")
-            else:
-                self.message("Client failed to connect: {} -> {}".format(sock, syscall))
-
-    def start(self, origin):
+    def start(self, debugger, origin):
         command = self.command(self.testcase.name, origin)
 
-        log.debug("Starting {origin}: {command}".format(**locals()))
         try:
-            pid = ptrace.debugger.child.createChild(command, False)
+            return debugger.new_child(origin, command)
         except ptrace.debugger.child.ChildError:
             self.message("Script '{}' not found.".format(name))
-            pid = ptrace.debugger.child.createChild(['/bin/true'], False)
+            return debugger.new_child(origin, ['/bin/true'])
 
-        process = self.debugger.addProcess(pid, True)
-        process.origin = origin
-        process.syscall()
+    def server_event(self, event):
+        if isinstance(event, ptrace.debugger.process_event.ProcessExit):
+            self.message("Client exit code is {}.".format(event.exitcode))
+        elif event.name == 'bind':
+            if event.result != 0 and event.socket.domain.text not in self.listening:
+                self.listening.add(event.socket.domain.text)
 
-        return process
+        elif event.name == 'listen':
+            if event.socket.domain.value == socket.AF_INET:
+                self.message(IP4Listening(True))
+            elif event.socket.domain.value == socket.AF_INET6:
+                self.message(IP6Listening(True))
 
-    def client_exited(self):
-        pass
+    def connected(self, sock, status):
+        cls = IP4Connected if sock.domain.value == socket.AF_INET else IP6Connected
 
-    def __str__(self):
-        return self.name
+        if not sock.connection_attempted:
+            sock.connection_attempted = True
+            if status == errno.EINPROGRESS:
+                self.message("Client attempts connection in non-blocking mode.")
+                return
+            else:
+                self.message("Client attempts connection in blocking mode.")
+
+        if status is not None and status != 0:
+            self.message("Client failed to connect: {} ({})".format(status, os.strerror(status)))
+
+        self.message(cls(status == 0))
+
+    def client_event(self, event):
+        if isinstance(event, ptrace.debugger.process_event.ProcessExit):
+            self.message("Server exit code is {}.".format(event.exitcode))
+        elif event.name == 'shutdown':
+            if event.socket.connection_attempted:
+                self.connected(event.socket, None)
+        elif event.name == 'connect':
+            if re.search(" sin6?_port=0, ", event.arguments[1].text):
+                return
+            self.connected(event.socket, -event.result)
+        elif event.name == 'getsockopt':
+            if event.arguments[1].value != socket.SOL_SOCKET:
+                return
+            if event.arguments[2].value != socket.SO_ERROR:
+                return
+            self.connected(event.socket, event.arguments[3].value)
 
     def prepare(self):
         os.environ['NETRESOLVE_BACKENDS'] = 'any|loopback|numerichost|hosts';

@@ -37,28 +37,3 @@ def _execChild(orig, arguments, no_stdout, env):
             os.execvp(arguments[0], arguments)
     except Exception as err:
         raise ptrace.debugger.child.ChildError(str(err))
-
-class Timeout(Exception):
-    pass
-
-@patch(ptrace.debugger.PtraceDebugger)
-def _wait_event(orig, self, wanted_pid, blocking=True):
-    if wanted_pid is not None:
-        return self._wait_event_pid(wanted_pid, blocking)
-
-    pause = 0.001
-    while True:
-        for pid in tuple(self.dict):
-            process = self._wait_event_pid(pid, False)
-            if process is not None:
-                return process
-        if not blocking:
-            return None
-        pause = min(pause * 2, 0.5)
-        if self.deadline is not None:
-            shift = self.deadline - time.time()
-            if shift > 0:
-                pause = min(pause, shift)
-            else:
-                raise Timeout()
-        time.sleep(pause)
