@@ -62,7 +62,6 @@ class FallbackDelay(Property):
 
 class Scenario(object):
     client = server = None
-    ip = subprocess.check_output(['which', 'ip']).strip()
 
     def __init__(self, testcase):
         self.namespaces = []
@@ -191,13 +190,7 @@ class LoopbackScenario(Scenario):
         self._add_netns('test-loopback')
 
     def command(self, name, origin):
-        return [
-                self.ip,
-                'netns',
-                'exec',
-                'test-loopback',
-                'wrapresolve',
-                'testcases/{}/{}'.format(name, origin)]
+        return ['ip', 'netns', 'exec', 'test-loopback', 'wrapresolve', 'testcases/{}/{}'.format(name, origin)]
 
 class DualstackScenario(Scenario):
     name = 'dualstack'
@@ -221,13 +214,7 @@ class DualstackScenario(Scenario):
             self._add_address(self.destination_ns, self.destination_link, address)
 
     def command(self, name, origin):
-        return [
-                self.ip,
-                'netns',
-                'exec',
-                'test-{}'.format(origin),
-                'wrapresolve',
-                'testcases/{}/{}'.format(name, origin)]
+        return ['ip', 'netns', 'exec', 'test-{}'.format(origin), 'wrapresolve', 'testcases/{}/{}'.format(name, origin)]
 
     def postprocess(self):
         self.testcase.add_property(IP4Listener(bool([listener for listener in self.listeners if listener.domain.value == socket.AF_INET])))
