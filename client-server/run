@@ -168,7 +168,7 @@ class Scenario(object):
             except patch.Timeout:
                 self.message("Timeout occured.")
             except BaseException as error:
-                self.error("Python exception {} occured: {}".format(type(error), error))
+                self.message("Python exception {} occured: {}".format(type(error), error))
                 raise
         finally:
             self.debugger.quit()
@@ -181,7 +181,7 @@ class Scenario(object):
             if sock.fd >= 0:
                 self.sockets[syscall.pid, sock.fd] = sock
             else:
-                self.error("Server failed to create socket: {}".format(sock))
+                self.message("Server failed to create socket: {}".format(sock))
         if syscall.name == 'bind':
             sock = self.sockets[syscall.pid, syscall.arguments[0].value]
 
@@ -205,7 +205,7 @@ class Scenario(object):
             if sock.fd >= 0:
                 self.sockets[syscall.pid, sock.fd] = sock
             else:
-                self.error("Client failed to create socket: {}".format(sock))
+                self.message("Client failed to create socket: {}".format(sock))
         if syscall.name == 'close':
             sock = self.sockets.pop((syscall.pid, syscall.arguments[0].value), None)
         if syscall.name == 'connect':
@@ -214,9 +214,9 @@ class Scenario(object):
                 if sock.protocol.value != 0:
                     self.info("Client connected: {} -> {}".format(sock, syscall))
             elif syscall.result == -errno.EINPROGRESS:
-                self.info("Client connecting in non-blocking mode.")
+                self.message("Client connecting in non-blocking mode.")
             else:
-                self.error("Client failed to connect: {} -> {}".format(sock, syscall))
+                self.message("Client failed to connect: {} -> {}".format(sock, syscall))
 
     def start(self, origin):
         command = self.command(self.testcase.name, origin)
@@ -225,7 +225,7 @@ class Scenario(object):
         try:
             pid = ptrace.debugger.child.createChild(command, False)
         except ptrace.debugger.child.ChildError:
-            self.info("Script '{}' not found.".format(name))
+            self.message("Script '{}' not found.".format(name))
             pid = ptrace.debugger.child.createChild(['/bin/true'], False)
 
         process = self.debugger.addProcess(pid, True)
@@ -236,12 +236,6 @@ class Scenario(object):
 
     def client_exited(self):
         pass
-
-    def error(self, message):
-        self.message(('error', message))
-
-    def info(self, message):
-        self.message(('info', message))
 
     def __str__(self):
         return self.name
