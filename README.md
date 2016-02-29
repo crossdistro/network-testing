@@ -5,9 +5,9 @@
 Dependencies:
 
  * Python 2.7 (should be fixed for 3.4)
- * python-ptrace
- * netresolve-devel (should be fixed to only require a non-devel package)
- * iproute2
+ * python-ptrace 0.8.1
+ * netresolve-devel git master (should be fixed to only require a non-devel package)
+ * iproute2 with netns support
 
 ### Client and server software tests
 
