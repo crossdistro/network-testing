@@ -131,7 +131,7 @@ class SyscallDebugger(ptrace.debugger.PtraceDebugger):
                 event.origin = process.origin
 
                 log.debug("[{}] Process exited: {} {}".format(event.origin, process.pid, event.exitcode))
-                self.add_event(event)
+                #self.add_event(event)
             except ptrace.debugger.ptrace_signal.ProcessSignal as event:
                 process = event.process
                 origin = process.origin
