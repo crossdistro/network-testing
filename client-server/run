@@ -207,7 +207,7 @@ class Scenario(object):
         fallback = None
 
         for event in self.events:
-            if event.origin == 'client' and event.name == 'connect':
+            if isinstance(event, debug.Event) and event.origin == 'client' and event.name == 'connect':
                 if event.arguments[1].text.startswith('<sockaddr_in sin_family=2, sin_port=0,'):
                     continue
                 if event.arguments[1].text.startswith('<sockaddr_in6 sin6_family=10, sin6_port=0, sin6_flowinfo=0L,'):
