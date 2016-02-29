@@ -159,7 +159,7 @@ class SyscallDebugger(ptrace.debugger.PtraceDebugger):
                         process.syscall()
                         continue
                 elif event.name in SOCKET_OPERATIONS:
-                    event.socket = self.sockets[event.pid, event.arguments[0].value]
+                    event.socket = self.sockets.get((event.pid, event.arguments[0].value))
 
                 # Handle syscalls that need to read process memory.
                 if event.name == 'getsockopt':
