@@ -230,10 +230,10 @@ class DualstackScenario(Scenario):
                 'testcases/{}/{}'.format(name, origin)]
 
     def postprocess(self):
-        self.testcase.properties.append(IP4Listener(bool([listener for listener in self.listeners if listener.domain.value == socket.AF_INET])))
-        self.testcase.properties.append(IP6Listener(bool([listener for listener in self.listeners if listener.domain.value == socket.AF_INET6])))
+        self.testcase.add_property(IP4Listener(bool([listener for listener in self.listeners if listener.domain.value == socket.AF_INET])))
+        self.testcase.add_property(IP6Listener(bool([listener for listener in self.listeners if listener.domain.value == socket.AF_INET6])))
         print(self.connections)
-        self.testcase.properties.append(ParallelConnect(len(self.connections) > 1))
+        self.testcase.add_property(ParallelConnect(len(self.connections) > 1))
 
 class IP6DroppedScenario(DualstackScenario):
     name = 'v6dropped'
@@ -243,12 +243,12 @@ class IP6DroppedScenario(DualstackScenario):
         subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'DROP'])
 
     def postprocess(self):
-        self.testcase.properties.append(IP4Connection(bool([conn for conn in self.connections if conn.domain.value == socket.AF_INET])))
-        self.testcase.properties.append(IP6Connection(bool([conn for conn in self.connections if conn.domain.value == socket.AF_INET6])))
+        self.testcase.add_property(IP4Connection(bool([conn for conn in self.connections if conn.domain.value == socket.AF_INET])))
+        self.testcase.add_property(IP6Connection(bool([conn for conn in self.connections if conn.domain.value == socket.AF_INET6])))
 
         if len(self.connections) > 1:
             preferred, fallback = self.connections[:2]
-            self.testcase.properties.append(FallbackDelay(fallback.attempted - preferred.attempted))
+            self.testcase.add_property(FallbackDelay(fallback.attempted - preferred.attempted))
 
 class Testcase:
     scenario_classes = [LoopbackScenario, DualstackScenario, IP6DroppedScenario]
@@ -258,11 +258,14 @@ class Testcase:
         self.scenarios = [cls(self) for cls in self.scenario_classes]
         if scenarios:
             self.scenarios = [scenario for scenario in self.scenarios if scenario.name in scenarios]
-        self.properties = []
+        self.properties = {}
 
     def run(self):
         for scenario in self.scenarios:
             scenario.run()
+
+    def add_property(self, prop):
+        self.properties[type(prop)] = prop
 
     def report(self):
         print(self.name)
@@ -270,7 +273,7 @@ class Testcase:
         for scenario in self.scenarios:
             scenario.report()
         print("  Properties:")
-        for property in self.properties:
+        for property in sorted(self.properties.values()):
             print("    {}".format(property))
         print()
 
