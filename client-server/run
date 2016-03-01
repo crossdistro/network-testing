@@ -123,7 +123,8 @@ class Scenario(object):
 
     def server_event(self, event):
         if isinstance(event, ptrace.debugger.process_event.ProcessExit):
-            self.message("Client exit code is {}.".format(event.exitcode))
+            if event.process == self.server:
+                self.message("Client exit code is {}.".format(event.exitcode))
         elif event.name == 'bind':
             if event.result != 0 and event.socket.domain.text not in self.listening:
                 self.listening.add(event.socket.domain.text)
@@ -152,7 +153,8 @@ class Scenario(object):
 
     def client_event(self, event):
         if isinstance(event, ptrace.debugger.process_event.ProcessExit):
-            self.message("Server exit code is {}.".format(event.exitcode))
+            if event.process == self.client:
+                self.message("Server exit code is {}.".format(event.exitcode))
         elif event.name == 'shutdown':
             if event.socket.connection_attempted:
                 self.connected(event.socket, None)
