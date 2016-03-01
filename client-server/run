@@ -64,6 +64,7 @@ class Scenario(object):
     client = server = None
 
     def __init__(self, testcase):
+        self.expected_exitcodes = {'server': 0, 'client': 0}
         self.namespaces = []
         self.testcase = testcase
         self.messages = []
@@ -106,6 +107,8 @@ class Scenario(object):
         # Process collected events.
         for event in self.events:
             if isinstance(event, ptrace.debugger.process_event.ProcessExit):
+                if event.exitcode != self.expected_exitcodes[event.origin]:
+                    self.message("Unexpected {} exit code {}.".format(event.origin, event.exitcode))
                 if event.process == self.server:
                     self.message("Client exit code is {}.".format(event.exitcode))
                 if event.process == self.client:
@@ -224,6 +227,9 @@ class DualstackScenario(Scenario):
 
 class IP6DroppedScenario(DualstackScenario):
     name = 'v6dropped'
+
+    def __init__(self):
+        super(IP6DroppedScenario, self).__init__()
 
     def prepare(self):
         super(IP6DroppedScenario, self).prepare()
