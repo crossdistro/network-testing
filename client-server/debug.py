@@ -19,8 +19,8 @@ TRACED_SYSCALLS = ptrace.syscall.SOCKET_SYSCALL_NAMES | PROCESS_SYSCALLS
 class Socket:
     connection_attempted = False
 
-    def __init__(self, timestamp, fd, domain, socktype, protocol):
-        self.time = timestamp
+    def __init__(self, fd, domain, socktype, protocol):
+        self.events = []
         self.fd = fd
         self.domain = domain
         self.socktype = socktype
@@ -30,6 +30,9 @@ class Socket:
 
     def __str__(self):
         return "Socket({fd}/{domain.text}/{socktype.text}/{protocol.text})".format(**vars(self))
+
+    def __repr__(self):
+        return repr(str(self))
 
 class Event:
     def __init__(self, syscall_event, time):
@@ -96,7 +99,7 @@ class SyscallDebugger(ptrace.debugger.PtraceDebugger):
 
         self.started = time.time()
         self.deadline = None
-        self.sockets = {}
+        self.active_sockets = {}
         self.events = []
 
         self.traceFork()
@@ -147,19 +150,25 @@ class SyscallDebugger(ptrace.debugger.PtraceDebugger):
                 # Handle socket related system calls.
                 if event.name in ('socket', 'accept'):
                     if event.name == 'socket':
-                        event.socket = Socket(event.time, event.result, *event.arguments)
+                        event.socket = Socket(event.result, *event.arguments)
+                        event.socket.events.append(event)
                     elif event.name == 'accept':
-                        listener = self.sockets[event.pid, event.arguments[0].value]
-                        event.socket = Socket(event.time, event.result, listener.domain, listener.socktype, listener.protocol)
+                        listener = self.active_sockets[event.pid, event.arguments[0].value]
+                        event.socket = Socket(event.result, listener.domain, listener.socktype, listener.protocol)
+                        event.socket.events.append(event)
                     if event.socket.fd >= 0:
-                        self.sockets[event.pid, event.socket.fd] = event.socket
+                        self.active_sockets[event.pid, event.socket.fd] = event.socket
                 elif event.name == 'close':
-                    event.socket = self.sockets.pop((event.pid, event.arguments[0].value), None)
+                    event.socket = self.active_sockets.pop((event.pid, event.arguments[0].value), None)
+                    if event.socket:
+                        event.socket.events.append(event)
                     if not event.socket:
                         process.syscall()
                         continue
                 elif event.name in SOCKET_OPERATIONS:
-                    event.socket = self.sockets.get((event.pid, event.arguments[0].value))
+                    event.socket = self.active_sockets.get((event.pid, event.arguments[0].value))
+                    if event.socket:
+                        event.socket.events.append(event)
 
                 # Handle syscalls that need to read process memory.
                 if event.name == 'getsockopt':

@@ -28,17 +28,17 @@ class Property:
     def __repr__(self):
         return repr(str(self))
 
-class IP4Listening(Property):
-    template = "Listening on IPv4: {arg}"
+class IP4Listener(Property):
+    template = "Listens on IPv4: {arg}"
 
-class IP6Listening(Property):
-    template = "Listening on IPv6: {arg}"
+class IP6Listener(Property):
+    template = "Listens on IPv6: {arg}"
 
-class IP4Connected(Property):
-    template = "Connected using IPv4: {arg}"
+class IP4Connection(Property):
+    template = "Attempts IPv4 connection: {arg}"
 
-class IP6Connected(Property):
-    template = "Connected using IPv6: {arg}"
+class IP6Connection(Property):
+    template = "Attempts IPv6 connection: {arg}"
 
 class PreferredFamily(Property):
     template = "Preferred address family is {arg}."
@@ -68,6 +68,8 @@ class Scenario(object):
         self.namespaces = []
         self.testcase = testcase
         self.messages = []
+        self.listeners = []
+        self.connections = []
 
     def __str__(self):
         return self.name
@@ -102,7 +104,7 @@ class Scenario(object):
         self.events = debugger.events
         del debugger
 
-        # Process collected devents.
+        # Process collected events.
         for event in self.events:
             if event.origin == 'server':
                 self.server_event(event)
@@ -130,44 +132,26 @@ class Scenario(object):
                 self.listening.add(event.socket.domain.text)
 
         elif event.name == 'listen':
-            if event.socket.domain.value == socket.AF_INET:
-                self.message(IP4Listening(True))
-            elif event.socket.domain.value == socket.AF_INET6:
-                self.message(IP6Listening(True))
-
-    def connected(self, sock, status):
-        cls = IP4Connected if sock.domain.value == socket.AF_INET else IP6Connected
-
-        if not sock.connection_attempted:
-            sock.connection_attempted = True
-            if status == errno.EINPROGRESS:
-                self.message("Client attempts connection in non-blocking mode.")
-                return
-            else:
-                self.message("Client attempts connection in blocking mode.")
-
-        if status is not None and status != 0:
-            self.message("Client failed to connect: {} ({})".format(status, os.strerror(status)))
-
-        self.message(cls(status == 0))
+            self.listeners.append(event.socket)
 
     def client_event(self, event):
         if isinstance(event, ptrace.debugger.process_event.ProcessExit):
             if event.process == self.client:
                 self.message("Server exit code is {}.".format(event.exitcode))
-        elif event.name == 'shutdown':
-            if event.socket.connection_attempted:
-                self.connected(event.socket, None)
         elif event.name == 'connect':
+            conn = event.socket
             if re.search(" sin6?_port=0, ", event.arguments[1].text):
                 return
-            self.connected(event.socket, -event.result)
+            conn.attempted = event.time
+            conn.status = event.result
+            conn.nonblocking = conn.status == errno.EINPROGRESS
+            self.connections.append(conn)
         elif event.name == 'getsockopt':
             if event.arguments[1].value != socket.SOL_SOCKET:
                 return
             if event.arguments[2].value != socket.SO_ERROR:
                 return
-            self.connected(event.socket, event.arguments[3].value)
+            event.socket.status = event.arguments[3].value
 
     def prepare(self):
         os.environ['NETRESOLVE_BACKENDS'] = 'any|loopback|numerichost|hosts';
@@ -203,26 +187,6 @@ class Scenario(object):
         print('    ' + self.name)
         for message in self.messages:
             print('      ' + str(message))
-
-    def _connections(self):
-        preferred = None
-        fallback = None
-
-        for event in self.events:
-            if isinstance(event, debug.Event) and event.origin == 'client' and event.name == 'connect':
-                if event.arguments[1].text.startswith('<sockaddr_in sin_family=2, sin_port=0,'):
-                    continue
-                if event.arguments[1].text.startswith('<sockaddr_in6 sin6_family=10, sin6_port=0, sin6_flowinfo=0L,'):
-                    continue
-
-                if preferred is None:
-                    preferred = event
-                elif fallback is None:
-                    fallback = event
-                else:
-                    self.message(('error', 'Third connection attempt detected.'))
-
-        return preferred, fallback
 
 class LoopbackScenario(Scenario):
     name = 'loopback'
@@ -272,11 +236,10 @@ class DualstackScenario(Scenario):
                 'testcases/{}/{}'.format(name, origin)]
 
     def postprocess(self):
-        preferred, fallback = self._connections()
-
-        log.debug([fallback == preferred])
-
-        self.testcase.properties.append(ParallelConnect(bool(fallback)))
+        self.testcase.properties.append(IP4Listener(bool([listener for listener in self.listeners if listener.domain.value == socket.AF_INET])))
+        self.testcase.properties.append(IP6Listener(bool([listener for listener in self.listeners if listener.domain.value == socket.AF_INET6])))
+        print(self.connections)
+        self.testcase.properties.append(ParallelConnect(len(self.connections) > 1))
 
 class IP6DroppedScenario(DualstackScenario):
     name = 'v6dropped'
@@ -286,10 +249,12 @@ class IP6DroppedScenario(DualstackScenario):
         subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'DROP'])
 
     def postprocess(self):
-        preferred, fallback = self._connections()
+        self.testcase.properties.append(IP4Connection(bool([conn for conn in self.connections if conn.domain.value == socket.AF_INET])))
+        self.testcase.properties.append(IP6Connection(bool([conn for conn in self.connections if conn.domain.value == socket.AF_INET6])))
 
-        if preferred and fallback:
-            self.testcase.properties.append(FallbackDelay(fallback.socket.time - preferred.socket.time))
+        if len(self.connections) > 1:
+            preferred, fallback = self.connections[:2]
+            self.testcase.properties.append(FallbackDelay(fallback.attempted - preferred.attempted))
 
 class Testcase:
     scenario_classes = [LoopbackScenario, DualstackScenario, IP6DroppedScenario]
