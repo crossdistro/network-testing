@@ -106,10 +106,34 @@ class Scenario(object):
 
         # Process collected events.
         for event in self.events:
-            if event.origin == 'server':
-                self.server_event(event)
-            if event.origin == 'client':
-                self.client_event(event)
+            if isinstance(event, ptrace.debugger.process_event.ProcessExit):
+                if event.process == self.server:
+                    self.message("Client exit code is {}.".format(event.exitcode))
+                if event.process == self.client:
+                    self.message("Server exit code is {}.".format(event.exitcode))
+            elif event.name == 'listen':
+                if event.origin != 'server':
+                    continue
+                self.listeners.append(event.socket)
+            elif event.name == 'connect':
+                if event.origin != 'client':
+                    continue
+                if re.search(" sin6?_port=0, ", event.arguments[1].text):
+                    continue
+                conn = event.socket
+                conn.attempted = event.time
+                conn.status = event.result
+                conn.nonblocking = conn.status == errno.EINPROGRESS
+                self.connections.append(conn)
+            elif event.name == 'getsockopt':
+                if event.origin != 'client':
+                    continue
+                if event.arguments[1].value != socket.SOL_SOCKET:
+                    continue
+                if event.arguments[2].value != socket.SO_ERROR:
+                    continue
+                event.socket.status = event.arguments[3].value
+
 
         # Postprocess acquired data.
         self.postprocess()
@@ -122,36 +146,6 @@ class Scenario(object):
         except ptrace.debugger.child.ChildError:
             self.message("Script '{}' not found.".format(name))
             return debugger.new_child(origin, ['/bin/true'])
-
-    def server_event(self, event):
-        if isinstance(event, ptrace.debugger.process_event.ProcessExit):
-            if event.process == self.server:
-                self.message("Client exit code is {}.".format(event.exitcode))
-        elif event.name == 'bind':
-            if event.result != 0 and event.socket.domain.text not in self.listening:
-                self.listening.add(event.socket.domain.text)
-
-        elif event.name == 'listen':
-            self.listeners.append(event.socket)
-
-    def client_event(self, event):
-        if isinstance(event, ptrace.debugger.process_event.ProcessExit):
-            if event.process == self.client:
-                self.message("Server exit code is {}.".format(event.exitcode))
-        elif event.name == 'connect':
-            conn = event.socket
-            if re.search(" sin6?_port=0, ", event.arguments[1].text):
-                return
-            conn.attempted = event.time
-            conn.status = event.result
-            conn.nonblocking = conn.status == errno.EINPROGRESS
-            self.connections.append(conn)
-        elif event.name == 'getsockopt':
-            if event.arguments[1].value != socket.SOL_SOCKET:
-                return
-            if event.arguments[2].value != socket.SO_ERROR:
-                return
-            event.socket.status = event.arguments[3].value
 
     def prepare(self):
         os.environ['NETRESOLVE_BACKENDS'] = 'any|loopback|numerichost|hosts';
