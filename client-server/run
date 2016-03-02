@@ -19,6 +19,8 @@ SOCKET_OPERATIONS = set(['bind', 'listen', 'accept', 'connect', 'getsockopt', 's
 PROCESS_SYSCALLS = set(['close', 'execve', 'fork', 'clone'])
 
 class Property:
+    success = lambda self: True
+
     def __init__(self, arg):
         self.arg = arg
 
@@ -27,6 +29,10 @@ class Property:
 
     def __repr__(self):
         return repr(str(self))
+
+class Errors(Property):
+    template = "Number of errors: {arg}"
+    success = lambda self: self.arg == 0
 
 class IP4Listener(Property):
     template = "Listens on IPv4: {arg}"
@@ -67,7 +73,7 @@ class Scenario(object):
         self.expected_exitcodes = {'server': 0, 'client': 0}
         self.namespaces = []
         self.testcase = testcase
-        self.messages = []
+        self.errors = []
         self.listeners = []
         self.connections = []
 
@@ -93,9 +99,9 @@ class Scenario(object):
                 debugger.set_timeout(20)
                 debugger.wait()
             except debug.Timeout:
-                self.message("Timeout occured.")
+                self.error("Timeout occured.")
             except BaseException as error:
-                self.message("Python exception {} occured: {}".format(type(error), error))
+                self.error("Python exception {} occured: {}".format(type(error), error))
                 raise
         finally:
             debugger.quit()
@@ -108,11 +114,11 @@ class Scenario(object):
         for event in self.events:
             if isinstance(event, ptrace.debugger.process_event.ProcessExit):
                 if event.exitcode != self.expected_exitcodes[event.origin]:
-                    self.message("Unexpected {} exit code {}.".format(event.origin, event.exitcode))
+                    self.error("Unexpected {} exit code {}.".format(event.origin, event.exitcode))
                 if event.process == self.server:
-                    self.message("Server exit code is {}.".format(event.exitcode))
+                    log.debug("Server exit code is {}.".format(event.exitcode))
                 if event.process == self.client:
-                    self.message("Client exit code is {}.".format(event.exitcode))
+                    log.debug("Client exit code is {}.".format(event.exitcode))
             elif event.name == 'listen':
                 if event.origin != 'server':
                     continue
@@ -146,7 +152,7 @@ class Scenario(object):
         try:
             return debugger.new_child(origin, command)
         except ptrace.debugger.child.ChildError:
-            self.message("Script '{}' not found.".format(name))
+            self.error("Script '{}' not found.".format(name))
             return debugger.new_child(origin, ['/bin/true'])
 
     def prepare(self):
@@ -176,13 +182,13 @@ class Scenario(object):
     def _add_address(self, ns, link, address):
         subprocess.check_call(['ip', '-n', ns, 'address', 'add', address, 'dev', link])
 
-    def message(self, message):
-        self.messages.append(message)
+    def error(self, error):
+        self.errors.append(error)
 
     def report(self):
         print('    ' + self.name)
-        for message in self.messages:
-            print('      ' + str(message))
+        for error in self.errors:
+            print('      ' + str(error))
 
 class LoopbackScenario(Scenario):
     name = 'loopback'
@@ -242,6 +248,7 @@ class IP6DroppedScenario(DualstackScenario):
 
 class Testcase:
     scenario_classes = [LoopbackScenario, DualstackScenario, IP6DroppedScenario]
+    success_str = { False: "FAIL", True: "PASS", None: "INFO" }
 
     def __init__(self, name, scenarios=None):
         self.name = name
@@ -251,8 +258,12 @@ class Testcase:
         self.properties = {}
 
     def run(self):
+        errors = Errors(0)
         for scenario in self.scenarios:
             scenario.run()
+            errors.arg += len(scenario.errors)
+        self.add_property(errors)
+        self.result = len([prop for prop in self.properties.values() if prop.success() is False]) == 0
 
     def add_property(self, prop):
         self.properties[type(prop)] = prop
@@ -263,8 +274,9 @@ class Testcase:
         for scenario in self.scenarios:
             scenario.report()
         print("  Properties:")
-        for property in sorted(self.properties.values()):
-            print("    {}".format(property))
+        for prop in sorted(self.properties.values()):
+            print("    {}: {}".format(self.success_str[prop.success()], prop))
+        print("  Result: {}".format(self.success_str[self.result]))
         print()
 
 class TestSuite:
@@ -276,11 +288,14 @@ class TestSuite:
     def run(self):
         for testcase in self.testcases:
             testcase.run()
+        self.result = not [testcase.result for testcase in self.testcases if testcase.result is False]
 
     def report(self):
         print()
         for testcase in self.testcases:
             testcase.report()
+        print("Overall result: {}".format(self.result))
+        print()
 
 def main():
     parser = argparse.ArgumentParser(description="Test driver for client-server networking applications.")
@@ -296,6 +311,8 @@ def main():
     if not options.list:
         suite.run()
     suite.report()
+
+    exit(0 if suite.result else 1)
 
 if __name__ == '__main__':
     main()
