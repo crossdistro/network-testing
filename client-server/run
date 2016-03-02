@@ -228,9 +228,6 @@ class DualstackScenario(Scenario):
 class IP6DroppedScenario(DualstackScenario):
     name = 'v6dropped'
 
-    def __init__(self):
-        super(IP6DroppedScenario, self).__init__()
-
     def prepare(self):
         super(IP6DroppedScenario, self).prepare()
         subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'DROP'])
