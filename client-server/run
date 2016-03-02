@@ -110,9 +110,9 @@ class Scenario(object):
                 if event.exitcode != self.expected_exitcodes[event.origin]:
                     self.message("Unexpected {} exit code {}.".format(event.origin, event.exitcode))
                 if event.process == self.server:
-                    self.message("Client exit code is {}.".format(event.exitcode))
-                if event.process == self.client:
                     self.message("Server exit code is {}.".format(event.exitcode))
+                if event.process == self.client:
+                    self.message("Client exit code is {}.".format(event.exitcode))
             elif event.name == 'listen':
                 if event.origin != 'server':
                     continue
