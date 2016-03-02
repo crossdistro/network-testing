@@ -37,3 +37,15 @@ def _execChild(orig, arguments, no_stdout, env):
             os.execvp(arguments[0], arguments)
     except Exception as err:
         raise ptrace.debugger.child.ChildError(str(err))
+
+# Ignore specific PtraceProcess errors when terminating process.
+import ptrace.debugger.process
+@patch(ptrace.debugger.PtraceProcess)
+def terminate(orig, self, *args, **kargs):
+    try:
+        return orig(self, *args, **kargs)
+    except ptrace.error.PtraceError as error:
+        if error.errno == 3:
+            log.error("Ptrace exception during 'PtraceProcess.terimate()': {}".format(error))
+        else:
+            raise
