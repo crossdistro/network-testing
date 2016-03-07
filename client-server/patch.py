@@ -5,6 +5,9 @@ import time
 
 import ptrace.debugger
 
+import logging
+log = logging.getLogger()
+
 def patch(ns):
     def _patch(func):
         orig = getattr(ns, func.__name__)
