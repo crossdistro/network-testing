@@ -18,7 +18,7 @@ log = logging.getLogger('tests')
 SOCKET_OPERATIONS = set(['bind', 'listen', 'accept', 'connect', 'getsockopt', 'shutdown', 'close'])
 PROCESS_SYSCALLS = set(['close', 'execve', 'fork', 'clone'])
 
-class Property:
+class Property(object):
     success = lambda self: True
 
     def __init__(self, arg):
