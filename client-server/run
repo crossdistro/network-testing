@@ -246,9 +246,10 @@ class IP6DroppedScenario(DualstackScenario):
             preferred, fallback = self.connections[:2]
             self.testcase.add_property(FallbackDelay(fallback.attempted - preferred.attempted))
 
+result_str = { False: "FAIL", True: "PASS", None: "INFO" }
+
 class Testcase:
     scenario_classes = [LoopbackScenario, DualstackScenario, IP6DroppedScenario]
-    success_str = { False: "FAIL", True: "PASS", None: "INFO" }
 
     def __init__(self, name, scenarios=None):
         self.name = name
@@ -275,8 +276,8 @@ class Testcase:
             scenario.report()
         print("  Properties:")
         for prop in sorted(self.properties.values()):
-            print("    {}: {}".format(self.success_str[prop.success()], prop))
-        print("  Result: {}".format(self.success_str[self.result]))
+            print("    {}: {}".format(result_str[prop.success()], prop))
+        print("  Result: {}".format(result_str[self.result]))
         print()
 
 class TestSuite:
@@ -294,7 +295,7 @@ class TestSuite:
         print()
         for testcase in self.testcases:
             testcase.report()
-        print("Overall result: {}".format(self.result))
+        print("Overall result: {}".format(result_str[self.result]))
         print()
 
 def main():
