@@ -19,7 +19,7 @@ SOCKET_OPERATIONS = set(['bind', 'listen', 'accept', 'connect', 'getsockopt', 's
 PROCESS_SYSCALLS = set(['close', 'execve', 'fork', 'clone'])
 
 class Property(object):
-    success = lambda self: True
+    success = lambda self: None
 
     def __init__(self, arg):
         self.arg = arg
@@ -276,7 +276,7 @@ class Testcase:
             scenario.report()
         print("  Properties:")
         for prop in sorted(self.properties.values()):
-            print("    {}: {}".format(result_str[prop.success()], prop))
+            print("    {} ({})".format(prop, result_str[prop.success()]))
         print("  Result: {}".format(result_str[self.result]))
         print()
 
