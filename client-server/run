@@ -187,6 +187,14 @@ class Scenario(object):
 
     def report(self):
         print('    ' + self.name)
+        for listener in self.listeners:
+            print("      Listener: {}".format(listener))
+            for event in listener.events:
+                print("        {}".format(event))
+        for connection in self.connections:
+            print("      Connection: {}".format(connection))
+            for event in connection.events:
+                print("        {}".format(event))
         for error in self.errors:
             print('      ' + str(error))
 
