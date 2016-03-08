@@ -44,11 +44,11 @@ def _execChild(orig, arguments, no_stdout, env):
 # Ignore specific PtraceProcess errors when terminating process.
 import ptrace.debugger.process
 @patch(ptrace.debugger.PtraceProcess)
-def terminate(orig, self, *args, **kargs):
+def detach(orig, self, *args, **kargs):
     try:
         return orig(self, *args, **kargs)
     except ptrace.error.PtraceError as error:
         if error.errno == 3:
-            log.error("Ptrace exception during 'PtraceProcess.terimate()': {}".format(error))
+            log.error("Ptrace exception during 'PtraceProcess.detach()': {}".format(error))
         else:
             raise
