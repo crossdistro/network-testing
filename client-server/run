@@ -104,15 +104,18 @@ class Scenario(object):
                 debugger.wait("server", "listen")
                 debugger.set_timeout(5)
                 debugger.wait("server", "listen")
+            except debug.Timeout:
+                self.error("Server timeout occured.")
 
+            try:
                 self.client = self.start(debugger, "client")
                 debugger.set_timeout(20)
                 debugger.wait()
             except debug.Timeout:
-                self.error("Timeout occured.")
-            except BaseException as error:
-                self.error("Python exception {} occured: {}".format(type(error), error))
-                raise
+                self.error("Client timeout occured.")
+        except BaseException as error:
+            self.error("Python exception {} occured: {}".format(type(error), error))
+            raise
         finally:
             debugger.quit()
             self.cleanup()
