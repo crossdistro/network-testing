@@ -65,8 +65,16 @@ class ParallelConnect(Property):
             self.method = "sequential"
             self.description = "This is a classic dual-stack connection method resulting in a significant timeout when the preferred address family fails silently."
 
-class FallbackDelay(Property):
-    template = "Fallback delay is {arg:.3f}."
+class V6PreferredDelay(Property):
+    def __str__(self):
+        if self.arg is None:
+            return "IPv6 isn't preferred or fallback to IPv4 doesn't work."
+        else:
+            return "IPv6 is preferred and fallback to IPv4 takes {arg:.3f} seconds.".format(**vars(self))
+
+class ConnectionCleanup(Property):
+    template = "Connection was shut down and closed: {arg}"
+    success = None
 
 class Scenario(object):
     client = server = None
@@ -134,6 +142,8 @@ class Scenario(object):
                 conn.attempted = event.time
                 conn.status = event.result
                 conn.nonblocking = conn.status == errno.EINPROGRESS
+                conn.shutdown = False
+                conn.closed = None
                 self.connections.append(conn)
             elif event.name == 'getsockopt':
                 if event.origin != 'client':
@@ -143,6 +153,10 @@ class Scenario(object):
                 if event.arguments[2].value != socket.SO_ERROR:
                     continue
                 event.socket.status = event.arguments[3].value
+            elif event.name == 'shutdown' and event.result == 0:
+                event.socket.shutdown = True
+            elif event.name == 'close' and event.result == 0:
+                event.socket.closed = event.time
 
 
         # Postprocess acquired data.
@@ -238,7 +252,6 @@ class DualstackScenario(Scenario):
     def postprocess(self):
         self.testcase.add_property(IP4Listener(bool([listener for listener in self.listeners if listener.domain.value == socket.AF_INET])))
         self.testcase.add_property(IP6Listener(bool([listener for listener in self.listeners if listener.domain.value == socket.AF_INET6])))
-        print(self.connections)
         self.testcase.add_property(ParallelConnect(len(self.connections) > 1))
 
 class IP6DroppedScenario(DualstackScenario):
@@ -248,13 +261,33 @@ class IP6DroppedScenario(DualstackScenario):
         super(IP6DroppedScenario, self).prepare()
         subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'DROP'])
 
-    def postprocess(self):
-        self.testcase.add_property(IP4Connection(bool([conn for conn in self.connections if conn.domain.value == socket.AF_INET])))
-        self.testcase.add_property(IP6Connection(bool([conn for conn in self.connections if conn.domain.value == socket.AF_INET6])))
+    @staticmethod
+    def _check_preferred(preferred, fallback):
+        # Preferred was attempted too late after fallback.
+        if preferred.attempted > fallback.attempted + 0.1:
+            return None
+        # Preferred wasn't closed.
+        if not preferred.closed:
+            return None
+        # Preferred was closed too early after attempted.
+        if preferred.closed < preferred.attempted + 0.05:
+            return None
+        # Preferred was closed after fallback.
+        if fallback.closed and preferred.closed > fallback.closed:
+            return None
+        return preferred.closed - preferred.attempted
 
-        if len(self.connections) > 1:
-            preferred, fallback = self.connections[:2]
-            self.testcase.add_property(FallbackDelay(fallback.attempted - preferred.attempted))
+    def postprocess(self):
+        v4 = [conn for conn in self.connections if conn.domain.value == socket.AF_INET]
+        v6 = [conn for conn in self.connections if conn.domain.value == socket.AF_INET6]
+
+        self.testcase.add_property(IP4Connection(bool(v4)))
+        self.testcase.add_property(IP6Connection(bool(v6)))
+
+        if len(v4) == 1 and len(v6) == 1:
+            v6preferred = self._check_preferred(v6[0], v4[0])
+            self.testcase.add_property(V6PreferredDelay(v6preferred))
+            self.testcase.add_property(ConnectionCleanup(bool(v6preferred and v4[0].shutdown and v4[0].closed)))
 
 result_str = { False: "FAIL", True: "PASS", None: "INFO" }
 
