@@ -30,9 +30,16 @@ class Property(object):
     def __repr__(self):
         return repr(str(self))
 
+    @property
+    def success(self):
+        return bool(self.arg)
+
 class Errors(Property):
     template = "Number of errors: {arg}"
-    success = lambda self: self.arg == 0
+
+    @property
+    def success(self):
+        return not self.arg
 
 class IP4Listener(Property):
     template = "Listens on IPv4: {arg}"
@@ -46,14 +53,9 @@ class IP4Connection(Property):
 class IP6Connection(Property):
     template = "Attempts IPv6 connection: {arg}"
 
-class PreferredFamily(Property):
-    template = "Preferred address family is {arg}."
-
-class PreferredLoopbackFamily(PreferredFamily):
-    template = "Preferred loopback address family is {family}."
-
 class ParallelConnect(Property):
     template = "Connection method is {method}. {description}"
+    success = None
 
     def __init__(self, flag):
         if flag:
@@ -272,7 +274,7 @@ class Testcase:
             scenario.run()
             errors.arg += len(scenario.errors)
         self.add_property(errors)
-        self.result = len([prop for prop in self.properties.values() if prop.success() is False]) == 0
+        self.result = len([prop for prop in self.properties.values() if prop.success is False]) == 0
 
     def add_property(self, prop):
         self.properties[type(prop)] = prop
@@ -283,8 +285,8 @@ class Testcase:
         for scenario in self.scenarios:
             scenario.report()
         print("  Properties:")
-        for prop in sorted(self.properties.values()):
-            print("    {} ({})".format(prop, result_str[prop.success()]))
+        for text, success in sorted([(str(value), value.success) for value in self.properties.values()]):
+            print("    {} ({})".format(text, result_str[success]))
         print("  Result: {}".format(result_str[self.result]))
         print()
 
