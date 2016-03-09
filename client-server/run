@@ -101,16 +101,16 @@ class Scenario(object):
             try:
                 self.server = self.start(debugger, "server")
                 debugger.set_timeout(35)
-                debugger.wait("server", "listen")
+                debugger.wait(self.server, "listen")
                 debugger.set_timeout(5)
-                debugger.wait("server", "listen")
+                debugger.wait(self.server, "listen")
             except debug.Timeout:
                 self.error("Server timeout occured.")
 
             try:
                 self.client = self.start(debugger, "client")
                 debugger.set_timeout(20)
-                debugger.wait()
+                debugger.wait(self.client)
             except debug.Timeout:
                 self.error("Client timeout occured.")
         except BaseException as error:
@@ -138,6 +138,8 @@ class Scenario(object):
                 self.listeners.append(event.socket)
             elif event.name == 'connect':
                 if event.origin != 'client':
+                    continue
+                if event.socket.domain.value not in (socket.AF_INET, socket.AF_INET6):
                     continue
                 if re.search(" sin6?_port=0, ", event.arguments[1].text):
                     continue

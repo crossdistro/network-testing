@@ -116,7 +116,7 @@ class SyscallDebugger(ptrace.debugger.PtraceDebugger):
 
         return process
 
-    def wait(self, origin=None, syscall=None):
+    def wait(self, script=None, syscall=None):
         while self.dict:
             try:
                 process = self.waitSyscall().process
@@ -135,6 +135,9 @@ class SyscallDebugger(ptrace.debugger.PtraceDebugger):
 
                 log.debug("[{}] Process exited: {} {}".format(event.origin, process.pid, event.exitcode))
                 self.add_event(event)
+
+                if process == script:
+                    return event
             except ptrace.debugger.ptrace_signal.ProcessSignal as event:
                 process = event.process
                 origin = process.origin
@@ -187,7 +190,7 @@ class SyscallDebugger(ptrace.debugger.PtraceDebugger):
                     self.add_event(event)
 
                     # Break loop if we reached the requested origin/syscall pair.
-                    if event.origin == origin and event.name == syscall:
+                    if event.origin == script.origin and event.name == syscall:
                         process.syscall()
                         return event
 
