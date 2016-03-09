@@ -11,22 +11,20 @@ Dependencies:
 
 ### Client and server software tests
 
-In `tests/client-server` directory you can find a test driver `run` and
-the testcase subdirectories under `testcases` directory. Each testcase
-subdirectory contains a pair of scripts for client and server
-processes.
+Test driver for testing client-server applications is located in
+`network_testing/client_server.py` and the individual tests are defined in
+subdirectories of `testcases/client-server` directory. Each subdirectory
+defines one test case consisting of a client script and a server script.
 
-#### Running tests
+#### Running tests in Git working directory
 
 Run individual test (for netresolve):
 
-    cd tests/client-server
-    sudo ./run netresolve
+    sudo ./test-client-server netresolve
 
 Run all tests:
 
-    cd tests/client-server
-    sudo ./run
+    sudo ./test-client-server
 
 #### Writing tests
 

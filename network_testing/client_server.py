@@ -15,6 +15,9 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 log = logging.getLogger('tests')
 
+data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
+testcase_path = os.path.join(data_path, 'testcases', 'client-server')
+
 SOCKET_OPERATIONS = set(['bind', 'listen', 'accept', 'connect', 'getsockopt', 'shutdown', 'close'])
 PROCESS_SYSCALLS = set(['close', 'execve', 'fork', 'clone'])
 
@@ -178,7 +181,7 @@ class Scenario(object):
 
     def prepare(self):
         os.environ['NETRESOLVE_BACKENDS'] = 'any|loopback|numerichost|hosts';
-        os.environ['NETRESOLVE_SYSCONFDIR'] = os.getcwd();
+        os.environ['NETRESOLVE_SYSCONFDIR'] = data_path;
         os.environ['DEFAULT_SERVICE'] = 'http'
 
     def cleanup(self):
@@ -228,7 +231,7 @@ class LoopbackScenario(Scenario):
         self._add_netns('test-loopback')
 
     def command(self, name, origin):
-        return ['ip', 'netns', 'exec', 'test-loopback', 'wrapresolve', 'testcases/{}/{}'.format(name, origin)]
+        return ['ip', 'netns', 'exec', 'test-loopback', 'wrapresolve', os.path.join(testcase_path, name, origin)]
 
 class DualstackScenario(Scenario):
     name = 'dualstack'
@@ -252,7 +255,7 @@ class DualstackScenario(Scenario):
             self._add_address(self.destination_ns, self.destination_link, address)
 
     def command(self, name, origin):
-        return ['ip', 'netns', 'exec', 'test-{}'.format(origin), 'wrapresolve', 'testcases/{}/{}'.format(name, origin)]
+        return ['ip', 'netns', 'exec', 'test-{}'.format(origin), 'wrapresolve', os.path.join(testcase_path, name, origin)]
 
     def postprocess(self):
         self.testcase.add_property(IP4Listener(bool([listener for listener in self.listeners if listener.domain.value == socket.AF_INET])))
@@ -330,7 +333,7 @@ class Testcase:
 
 class TestSuite:
     def __init__(self, testcases=None, scenarios=None):
-        self.testcases = [Testcase(name, scenarios) for name in os.listdir('testcases')]
+        self.testcases = [Testcase(name, scenarios) for name in os.listdir(testcase_path)]
         if testcases:
             self.testcases = [testcase for testcase in self.testcases if testcase.name in testcases]
 

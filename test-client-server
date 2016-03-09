@@ -1,0 +1,5 @@
+#!/usr/bin/python
+
+from network_testing.client_server import main
+
+main()
