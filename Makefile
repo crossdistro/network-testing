@@ -28,3 +28,7 @@ network-testing.spec: network-testing.spec.in test-client-server Makefile
 clean:
 	rm -rf dist
 	rm -rf *.src.rpm
+
+vagrant:
+	vagrant up --provision
+	vagrant ssh
