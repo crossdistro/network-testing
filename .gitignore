@@ -6,3 +6,4 @@
 /dist
 /network-testing.spec
 /x86_64
+.vagrant/
