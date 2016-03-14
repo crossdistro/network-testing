@@ -299,7 +299,7 @@ class IP6DroppedScenario(DualstackScenario):
 
 result_str = { False: "FAIL", True: "PASS", None: "INFO" }
 
-class Testcase:
+class TestCase:
     scenario_classes = [LoopbackScenario, DualstackScenario, IP6DroppedScenario]
 
     def __init__(self, name, scenarios=None):
@@ -333,7 +333,7 @@ class Testcase:
 
 class TestSuite:
     def __init__(self, testcases=None, scenarios=None):
-        self.testcases = [Testcase(name, scenarios) for name in os.listdir(testcase_path)]
+        self.testcases = [TestCase(name, scenarios) for name in os.listdir(testcase_path)]
         if testcases:
             self.testcases = [testcase for testcase in self.testcases if testcase.name in testcases]
 
@@ -351,7 +351,8 @@ class TestSuite:
 
 def main():
     parser = argparse.ArgumentParser(description="Test driver for client-server networking applications.")
-    parser.add_argument("--list", "-l", action="store_true", help="List testcases and scenarios.")
+    parser.add_argument("--list-testcases", "-l", action="store_true", help="List testcases and scenarios.")
+    parser.add_argument("--list-scenarios", action="store_true", help="List testcases and scenarios.")
     parser.add_argument("--deps", action="store_true", help="List dependencies.")
     parser.add_argument("testcases", nargs="?")
     parser.add_argument("scenarios", nargs="?")
@@ -361,8 +362,14 @@ def main():
     scenarios = options.scenarios and options.scenarios.split(',')
 
     suite = TestSuite(testcases, scenarios)
-    if options.list:
-        suite.report()
+    if options.list_testcases:
+        for testcase in suite.testcases:
+            print(testcase.name)
+        exit(0)
+    elif options.list_scenarios:
+        for scenario in TestCase.scenario_classes:
+            print(scenario.name)
+        exit(0)
     elif options.deps:
         for testcase in suite.testcases:
             path = os.path.join(testcase_path, testcase.name, "deps")
