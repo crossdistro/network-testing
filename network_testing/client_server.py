@@ -352,6 +352,7 @@ class TestSuite:
 def main():
     parser = argparse.ArgumentParser(description="Test driver for client-server networking applications.")
     parser.add_argument("--list", "-l", action="store_true", help="List testcases and scenarios.")
+    parser.add_argument("--deps", action="store_true", help="List dependencies.")
     parser.add_argument("testcases", nargs="?")
     parser.add_argument("scenarios", nargs="?")
     options = parser.parse_args()
@@ -360,9 +361,17 @@ def main():
     scenarios = options.scenarios and options.scenarios.split(',')
 
     suite = TestSuite(testcases, scenarios)
-    if not options.list:
+    if options.list:
+        suite.report()
+    elif options.deps:
+        for testcase in suite.testcases:
+            path = os.path.join(testcase_path, testcase.name, "deps")
+            if os.path.isfile(path):
+                subprocess.check_call(['cat', path])
+        exit(0)
+    else:
         suite.run()
-    suite.report()
+        suite.report()
 
     exit(0 if suite.result else 1)
 

@@ -3,7 +3,7 @@
 
 Name: network-testing
 Version: 0.0.1
-Release: 0.15%{?snapshot_suffix}%{?dist}
+Release: 0.17%{?snapshot_suffix}%{?dist}
 Summary: Network application testing project
 License: BSD
 URL: https://sourceware.org/%{name}/
@@ -14,6 +14,12 @@ Requires: python-ptrace netresolve iproute
 Network application testing project provides a test driver written in Python
 and a set of application tests. Tests are run in different network scenarios
 using kernel network namespaces.
+
+%package deps
+Summary: Dependencies for all tests.
+Requires: %{name}%{?_isa} = %{version}-%{release}
+%description deps
+Virtual package depending on packages tested by the network testing project.
 
 %prep
 %setup
@@ -29,3 +35,5 @@ chmod +x %{buildroot}/usr/lib*/python*/site-packages/network_testing/data/testca
 rm -rf $RPM_BUILD_ROOT
 
 %files -f INSTALLED_FILES
+
+%files deps
