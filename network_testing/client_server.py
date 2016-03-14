@@ -12,7 +12,7 @@ import debug
 import ptrace.debugger
 
 import logging
-logging.basicConfig(level=logging.DEBUG, format="%(message)s")
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger('tests')
 
 data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
@@ -351,12 +351,16 @@ class TestSuite:
 
 def main():
     parser = argparse.ArgumentParser(description="Test driver for client-server networking applications.")
+    parser.add_argument("--debug", "-d", action="store_true", help="Print debug messages.")
     parser.add_argument("--list-testcases", "-l", action="store_true", help="List testcases and scenarios.")
     parser.add_argument("--list-scenarios", action="store_true", help="List testcases and scenarios.")
     parser.add_argument("--deps", action="store_true", help="List dependencies.")
     parser.add_argument("testcases", nargs="?")
     parser.add_argument("scenarios", nargs="?")
     options = parser.parse_args()
+
+    if options.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     testcases = options.testcases and options.testcases.split(',')
     scenarios = options.scenarios and options.scenarios.split(',')
