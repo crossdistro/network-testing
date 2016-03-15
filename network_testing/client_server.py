@@ -333,7 +333,7 @@ class TestCase:
 
 class TestSuite:
     def __init__(self, testcases=None, scenarios=None):
-        self.testcases = [TestCase(name, scenarios) for name in os.listdir(testcase_path)]
+        self.testcases = [TestCase(name, scenarios) for name in sorted(os.listdir(testcase_path))]
         if testcases:
             self.testcases = [testcase for testcase in self.testcases if testcase.name in testcases]
 
