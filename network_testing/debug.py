@@ -106,6 +106,7 @@ class SyscallDebugger(ptrace.debugger.PtraceDebugger):
 
     def set_timeout(self, timeout):
         self.deadline = time.time() + timeout
+        log.debug("New deadline: {:.3f}".format(self.deadline - self.started))
 
     def new_child(self, origin, command):
         log.debug("Starting {origin}: {command}".format(**locals()))
@@ -195,6 +196,10 @@ class SyscallDebugger(ptrace.debugger.PtraceDebugger):
                         return event
 
                 process.syscall()
+
+    def quit(self):
+        log.debug("[{:.3f}] Quitting debugger.".format(time.time() - self.started))
+        super(SyscallDebugger, self).quit()
 
     def add_event(self, event):
         self.events.append(event)
