@@ -3,6 +3,9 @@ FEDORA_VERSION="f25"
 
 all:
 
+run:
+	sudo ./test-client-server
+
 local: dist spec
 	fedpkg local
 
