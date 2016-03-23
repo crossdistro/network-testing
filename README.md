@@ -1,6 +1,12 @@
-# Network application testing framework and tests
+# User space networking test suite
 
 ## Overview
+
+The network application testing project consinst of an easy to use test
+framework for IPv4 and IPv6 features in applications and libraries. It
+is based on network namespaces and the `ptrace()` syscall. Each piece
+of software is tested in different network configurations and evaluated
+for features and bugs.
 
 ## Installation
 
