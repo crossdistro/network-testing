@@ -350,6 +350,10 @@ class TestSuite:
         print()
 
 def main():
+    if os.geteuid() != 0:
+        print("You have to be root to run the test driver. Please use sudo.")
+        exit(1)
+
     parser = argparse.ArgumentParser(description="Test driver for client-server networking applications.")
     parser.add_argument("--debug", "-d", action="store_true", help="Print debug messages.")
     parser.add_argument("--list-testcases", "-l", action="store_true", help="List testcases and scenarios.")
