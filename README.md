@@ -29,19 +29,25 @@ for any distribution.
 
 ### Fedora and EPEL
 
-There is a Fedora COPR repository for Fedora and EPEL distributions. You
-can install `network-testing-deps` to also get all tested packages.
+There is a Fedora COPR repository for Fedora and EPEL distributions. Just
+enable the COPR repository and install the test suite.
 
     dnf copr enable pavlix/network-testing
-    dnf install network-testing-deps
-    test-client-server
+    dnf install network-testing
 
-Alternatively you can install just the test project and individual
-dependencies for individual tests.
+Then install packages required for your desired test and run the test. You
+can ask the test driver for the names of the packages required for your
+desired test.
 
-    dnf copr enable pavlix/network-testing
-    dnf install network-testing openssh
+    dnf install `test-client-server --deps ssh`
     test-client-server ssh
+
+Alternatively, you may want to install available packages for all tests. In
+case your version of Fedora doesn't provide some of the packages, those
+tests would fail.
+
+    for pkg in `test-client-server --deps`; do dnf -y install $pkg; done
+    test-client-server
 
 ## Client and server software tests
 
