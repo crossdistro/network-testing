@@ -1,0 +1,62 @@
+{% extends "_layout.html" %}
+{% block title %}Network Test Report{% endblock %}
+{% block content %}
+    <div class="container">
+        <div class="col-md-8">
+            <h1>Network Test Report</h1>
+            <table class="table table-striped" style="width: auto">
+                <tr>
+                    <th>Name</th>
+                    {% for feature in data.schema %}
+                        <th style="text-align: center">{{ feature.short }}</th>
+                    {% endfor %}
+                </tr>
+                {% for name, pkg in data.results.items() | sort %}
+                    <tr>
+                        <td>
+                            <span style="background-color: #{{ data.result_colors[pkg.status] }};">&nbsp;</span>
+                            {{ name }}
+                        </td>
+                        {% for feature in data.schema %}
+                            {% set result = pkg.properties.get(feature.name) %}
+                            {% if result %}
+                                <td style="text-align: right">
+                                    <span class="label label-default"
+                                        style="background-color: #{{ data.result_colors[result.status] }};">
+                                    {% if feature.type == 'bool' %}
+                                        {% if result.value %}
+                                            Y
+                                        {% else %}
+                                            N
+                                        {% endif %}
+                                    {% elif feature.type == 'float' %}
+                                        {{ "{:.2f}".format(result.value) }}
+                                    {% else %}
+                                        {{ result.value }}
+                                    {% endif %}
+                                    </span>
+                                </td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="col-md-4">
+            <h2>Feature List</h2>
+            <dl>
+            {% for feature in data.schema %}
+                <dt>
+                    {{ feature.short }} –
+                    {{ feature.name }}
+                </dt>
+                <dd>
+                    <p>{{ feature.description }}</p>
+                </dd>
+            {% endfor %}
+            </dl>
+        </div>
+    </div>
+{% endblock content %}

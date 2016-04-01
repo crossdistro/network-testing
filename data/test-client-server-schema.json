@@ -1,51 +1,44 @@
-{
-    "IP6Listener": {
-        "values": {
-            "false": {},
-            "true": {}
-        },
-        "name": "Listens on IPv6"
+[
+    {
+        "name": "IP4Listener",
+        "short": "L4",
+        "type": "bool",
+        "description": "Listens on IPv4"
     },
-    "IP4Connection": {
-        "values": {
-            "false": {},
-            "true": {}
-        },
-        "name": "Attempts IPv4 connection"
+    {
+        "name": "IP6Listener",
+        "short": "L6",
+        "type": "bool",
+        "description": "Listens on IPv6"
     },
-    "Errors": {
-        "values": {},
-        "name": "Number of errors"
+    {
+        "name": "IP4Connection",
+        "short": "C4",
+        "type": "bool",
+        "description": "Attempts IPv4 connection"
     },
-    "V6PreferredDelay": {
-        "values": {
-            "false": {},
-            "true": {}
-        },
-        "name": ""
+    {
+        "name": "IP6Connection",
+        "short": "C6",
+        "type": "bool",
+        "description": "Attempts IPv6 connection"
     },
-    "ConnectionCleanup": {
-        "values": {
-            "false": {},
-            "true": {}
-        },
-        "name": "Connection was shut down and closed"
+    {
+        "name": "V6PreferredDelay",
+        "short": "D6",
+        "type": "float",
+        "description": ""
     },
-    "IP6Connection": {
-        "values": {
-            "false": {},
-            "true": {}
-        },
-        "name": "Attempts IPv6 connection"
+    {
+        "name": "ConnectionCleanup",
+        "short": "CC",
+        "type": "bool",
+        "description": "Connection was shut down and closed"
     },
-    "IP4Listener": {
-        "values": {
-            "false": {},
-            "true": {}
-        },
-        "name": "Listens on IPv4"
-    },
-    "ParallelConnect": {
+    {
+        "name": "ParallelConnect",
+        "short": "PC",
+        "type": "bool",
         "values": {
             "false": {
                 "description": "This is a classic dual-stack connection method resulting in a significant timeout when the preferred address family fails silently."
@@ -54,6 +47,12 @@
                 "description": "This is a happy eyeballs style dual-stack connection method resulting in fast fallback when the preferred address family fails silently."
             }
         },
-        "name": "Connection method is parallel"
+        "description": "Connection method is parallel"
+    },
+    {
+        "name": "Errors",
+        "short": "Err",
+        "type": "int",
+        "description": "Number of errors"
     }
-}
+]
