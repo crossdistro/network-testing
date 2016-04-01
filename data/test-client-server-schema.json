@@ -1,0 +1,59 @@
+{
+    "IP6Listener": {
+        "values": {
+            "false": {},
+            "true": {}
+        },
+        "name": "Listens on IPv6"
+    },
+    "IP4Connection": {
+        "values": {
+            "false": {},
+            "true": {}
+        },
+        "name": "Attempts IPv4 connection"
+    },
+    "Errors": {
+        "values": {},
+        "name": "Number of errors"
+    },
+    "V6PreferredDelay": {
+        "values": {
+            "false": {},
+            "true": {}
+        },
+        "name": ""
+    },
+    "ConnectionCleanup": {
+        "values": {
+            "false": {},
+            "true": {}
+        },
+        "name": "Connection was shut down and closed"
+    },
+    "IP6Connection": {
+        "values": {
+            "false": {},
+            "true": {}
+        },
+        "name": "Attempts IPv6 connection"
+    },
+    "IP4Listener": {
+        "values": {
+            "false": {},
+            "true": {}
+        },
+        "name": "Listens on IPv4"
+    },
+    "ParallelConnect": {
+        "values": {
+            "false": {
+                "description": "This is a classic dual-stack connection method resulting in a significant timeout when the preferred address family fails silently."
+            },
+            "true": {
+                "description": "This is a happy eyeballs style dual-stack connection method resulting in fast fallback when the preferred address family fails silently."
+            }
+        },
+        "name": "Connection method is parallel"
+    }
+}
