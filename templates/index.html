@@ -1,5 +1,21 @@
 {% extends "_layout.html" %}
+
+{% macro result_value(type, value) -%}
+    {%- if type == 'bool' -%}
+        {%- if value -%}
+            Y
+        {%- else -%}
+            N
+        {%- endif -%}
+    {%- elif type == 'float' -%}
+        {{ "{:.2f}".format(value) }}
+    {%- else -%}
+        {{ value }}
+    {% endif -%}
+{%- endmacro -%}
+
 {% block title %}Network Test Report{% endblock %}
+
 {% block content %}
     <div class="container">
         <div class="col-md-8">
@@ -21,20 +37,10 @@
                             {% set result = pkg.properties.get(feature.name) %}
                             {% if result %}
                                 <td style="text-align: right">
-                                    <span class="label label-default"
+                                    <big><span class="label label-default"
                                         style="background-color: #{{ data.result_colors[result.status] }};">
-                                    {% if feature.type == 'bool' %}
-                                        {% if result.value %}
-                                            Y
-                                        {% else %}
-                                            N
-                                        {% endif %}
-                                    {% elif feature.type == 'float' %}
-                                        {{ "{:.2f}".format(result.value) }}
-                                    {% else %}
-                                        {{ result.value }}
-                                    {% endif %}
-                                    </span>
+                                    {{ result_value(feature.type, result.value) }}
+                                    </span></big>
                                 </td>
                             {% else %}
                                 <td></td>
@@ -54,6 +60,14 @@
                 </dt>
                 <dd>
                     <p>{{ feature.description }}</p>
+                    {% if 'values' in feature %}
+                        {% for name, info in feature['values'].items() | sort %}
+                            <p>
+                                <b>{{ result_value(feature.type, name) }}</b>:
+                                {{ info.description }}
+                            <p>
+                        {% endfor %}
+                    {% endif %}
                 </dd>
             {% endfor %}
             </dl>

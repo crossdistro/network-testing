@@ -6,16 +6,38 @@ import shutil
 
 import jinja2
 import click
+import yaml
 
 SOURCE_FILES = {
-    'schema': 'test-client-server-schema.json',
-    'results': 'test-client-server.json',
-    'result_colors': 'result-colors.json',
+    'schema': 'test-client-server-schema',
+    'results': 'test-client-server',
+    'result_colors': 'result-colors',
 }
 
-def load_json(filename):
-    with open(filename, encoding='utf-8') as file:
-        return json.load(file)
+def load_data(filename_base):
+    try:
+        json_file = open(filename_base + '.json', encoding='utf-8')
+    except FileNotFoundError:
+        json_file = None
+    try:
+        yaml_file = open(filename_base + '.yaml', encoding='utf-8')
+    except FileNotFoundError:
+        yaml_file = None
+    try:
+        if json_file and yaml_file:
+            raise ValueError(filename_base + ": both JSON and YAML exist")
+        elif json_file:
+            return json.load(json_file)
+        elif yaml_file:
+            return yaml.load(yaml_file)
+        else:
+            raise ValueError(filename_base + ": neither JSON nor YAML exist")
+    finally:
+        if json_file:
+            json_file.close()
+        if yaml_file:
+            yaml_file.close()
+
 
 @click.command()
 @click.option('-o', '--outdir', default='./output/')
@@ -25,10 +47,8 @@ def build(datadir, outdir, templatedir):
     shutil.rmtree(outdir)
     os.makedirs(outdir)
 
-    data = {ident: load_json(os.path.join(datadir, filename))
+    data = {ident: load_data(os.path.join(datadir, filename))
             for ident, filename in SOURCE_FILES.items()}
-
-    print(data)
 
     loader = jinja2.FileSystemLoader(templatedir)
     template_env = jinja2.Environment(
@@ -42,10 +62,10 @@ def build(datadir, outdir, templatedir):
         with open(os.path.join(outdir, out_name), 'w') as file:
             file.write(result)
 
+    # Render all the pages
     render('index.html', 'index.html')
 
-    print('Output is in:')
-    print(os.path.abspath(outdir))
+    print('Wrote to', os.path.abspath(outdir))
 
 
 if __name__ == '__main__':
