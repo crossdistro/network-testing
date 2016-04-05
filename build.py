@@ -38,11 +38,15 @@ def load_data(filename_base):
         if yaml_file:
             yaml_file.close()
 
+base_path = os.path.dirname(__file__)
 
 @click.command()
-@click.option('-o', '--outdir', default='./output/')
-@click.option('--datadir', default='./example_data/')
-@click.option('--templatedir', default='./templates/')
+@click.option('-d', '--datadir', default=os.path.join(base_path, 'example_data/'),
+              help='Directory containing input data (defaults to included example data)')
+@click.option('-o', '--outdir', default=os.path.join(base_path, 'output/'),
+              help='Directory for output (will be overwritten)')
+@click.option('--templatedir', default=os.path.join(base_path, 'templates/'),
+              help='Directory containing HTML templates')
 def build(datadir, outdir, templatedir):
     try:
         shutil.rmtree(outdir)
