@@ -44,7 +44,10 @@ def load_data(filename_base):
 @click.option('--datadir', default='./example_data/')
 @click.option('--templatedir', default='./templates/')
 def build(datadir, outdir, templatedir):
-    shutil.rmtree(outdir)
+    try:
+        shutil.rmtree(outdir)
+    except FileNotFoundError:
+        pass
     os.makedirs(outdir)
 
     data = {ident: load_data(os.path.join(datadir, filename))
