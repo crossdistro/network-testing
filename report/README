@@ -1,0 +1,24 @@
+Network Test Report
+===================
+
+Generates a static page summarizing test results.
+
+
+Installation
+------------
+
+Python libraries in requirements.txt. You can install them with:
+
+    pip install --user -r requirements.txt
+
+(Leave off --user if working in a virtual environment.)
+
+
+Usage
+-----
+
+To run on included example data, run:
+
+    ./build.py
+
+To see all options, run ./build.py --help
