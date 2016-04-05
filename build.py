@@ -41,7 +41,7 @@ def load_data(filename_base):
 
 @click.command()
 @click.option('-o', '--outdir', default='./output/')
-@click.option('--datadir', default='./data/')
+@click.option('--datadir', default='./example_data/')
 @click.option('--templatedir', default='./templates/')
 def build(datadir, outdir, templatedir):
     shutil.rmtree(outdir)

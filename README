@@ -3,12 +3,22 @@ Network Test Report
 
 Generates a static page summarizing test results.
 
-Usage: build.py [OPTIONS]
 
-Options:
-  -o, --outdir TEXT
-  --datadir TEXT
-  --templatedir TEXT
-  --help              Show this message and exit.
+Installation
+------------
 
-Example data is included in the `data` directory.
+Python libraries in requirements.txt. You can install them with:
+
+    pip install --user -r requirements.txt
+
+(Leave off --user if working in a virtual environment.)
+
+
+Usage
+-----
+
+To run on included example data, run:
+
+    ./build.py
+
+To see all options, run ./build.py --help
