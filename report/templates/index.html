@@ -1,0 +1,76 @@
+{% extends "_layout.html" %}
+
+{% macro result_value(type, value) -%}
+    {%- if type == 'bool' -%}
+        {%- if value -%}
+            Y
+        {%- else -%}
+            N
+        {%- endif -%}
+    {%- elif type == 'float' -%}
+        {{ "{:.2f}".format(value) }}
+    {%- else -%}
+        {{ value }}
+    {% endif -%}
+{%- endmacro -%}
+
+{% block title %}Network Test Report{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="col-md-8">
+            <h1>Network Test Report</h1>
+            <table class="table table-striped" style="width: auto">
+                <tr>
+                    <th>Name</th>
+                    {% for feature in data.schema %}
+                        <th style="text-align: center">{{ feature.short }}</th>
+                    {% endfor %}
+                </tr>
+                {% for name, pkg in data.results.items() | sort %}
+                    <tr>
+                        <td>
+                            <span style="background-color: #{{ data.result_colors[pkg.status] }};">&nbsp;</span>
+                            {{ name }}
+                        </td>
+                        {% for feature in data.schema %}
+                            {% set result = pkg.properties.get(feature.name) %}
+                            {% if result %}
+                                <td style="text-align: right">
+                                    <big><span class="label label-default"
+                                        style="background-color: #{{ data.result_colors[result.status] }};">
+                                    {{ result_value(feature.type, result.value) }}
+                                    </span></big>
+                                </td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="col-md-4">
+            <h2>Feature List</h2>
+            <dl>
+            {% for feature in data.schema %}
+                <dt>
+                    {{ feature.short }} –
+                    {{ feature.name }}
+                </dt>
+                <dd>
+                    <p>{{ feature.description }}</p>
+                    {% if 'values' in feature %}
+                        {% for name, info in feature['values'].items() | sort %}
+                            <p>
+                                <b>{{ result_value(feature.type, name) }}</b>:
+                                {{ info.description }}
+                            <p>
+                        {% endfor %}
+                    {% endif %}
+                </dd>
+            {% endfor %}
+            </dl>
+        </div>
+    </div>
+{% endblock content %}

@@ -1,0 +1,279 @@
+{
+    "python": {
+        "status": "FAIL",
+        "properties": {
+            "IP4Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP6Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "Errors": {
+                "status": "FAIL",
+                "value": 1
+            },
+            "IP6Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP4Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": false
+            }
+        }
+    },
+    "ping": {
+        "status": "FAIL",
+        "properties": {
+            "IP4Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP6Listener": {
+                "status": "FAIL",
+                "value": false
+            },
+            "Errors": {
+                "status": "FAIL",
+                "value": 3
+            },
+            "IP6Connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "IP4Listener": {
+                "status": "FAIL",
+                "value": false
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": false
+            }
+        }
+    },
+    "netresolve": {
+        "status": "PASS",
+        "properties": {
+            "IP4Connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "IP6Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "Errors": {
+                "status": "PASS",
+                "value": 0
+            },
+            "V6PreferredDelay": {
+                "status": "PASS",
+                "value": 1.0297050476074219
+            },
+            "ConnectionCleanup": {
+                "status": "INFO",
+                "value": true
+            },
+            "IP6Connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": true
+            },
+            "IP4Listener": {
+                "status": "PASS",
+                "value": true
+            }
+        }
+    },
+    "subversion": {
+        "status": "FAIL",
+        "properties": {
+            "IP4Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP6Listener": {
+                "status": "FAIL",
+                "value": false
+            },
+            "Errors": {
+                "status": "FAIL",
+                "value": 6
+            },
+            "IP6Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP4Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": true
+            }
+        }
+    },
+    "dnsmasq-dhcpcd": {
+        "status": "FAIL",
+        "properties": {
+            "IP4Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP6Listener": {
+                "status": "FAIL",
+                "value": false
+            },
+            "Errors": {
+                "status": "FAIL",
+                "value": 10
+            },
+            "IP6Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP4Listener": {
+                "status": "FAIL",
+                "value": false
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": false
+            }
+        }
+    },
+    "netresolve-sequential": {
+        "status": "PASS",
+        "properties": {
+            "IP4Connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "IP6Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "Errors": {
+                "status": "PASS",
+                "value": 0
+            },
+            "V6PreferredDelay": {
+                "status": "PASS",
+                "value": 15.032451152801514
+            },
+            "ConnectionCleanup": {
+                "status": "INFO",
+                "value": true
+            },
+            "IP6Connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": false
+            },
+            "IP4Listener": {
+                "status": "PASS",
+                "value": true
+            }
+        }
+    },
+    "ssh": {
+        "status": "FAIL",
+        "properties": {
+            "IP4Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP6Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "Errors": {
+                "status": "FAIL",
+                "value": 1
+            },
+            "IP6Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP4Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": false
+            }
+        }
+    },
+    "netcat": {
+        "status": "FAIL",
+        "properties": {
+            "IP4Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP6Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "Errors": {
+                "status": "FAIL",
+                "value": 1
+            },
+            "IP6Connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "IP4Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": false
+            }
+        }
+    },
+    "python3-asyncio": {
+        "status": "FAIL",
+        "properties": {
+            "IP4Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP6Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "Errors": {
+                "status": "FAIL",
+                "value": 1
+            },
+            "IP6Connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "IP4Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": false
+            }
+        }
+    }
+}
