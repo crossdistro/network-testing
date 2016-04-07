@@ -1,0 +1,31 @@
+{
+    "subversion": {
+        "status": "FAIL",
+        "properties": {
+            "IP4Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP6Listener": {
+                "status": "FAIL",
+                "value": false
+            },
+            "Errors": {
+                "status": "FAIL",
+                "value": 6
+            },
+            "IP6Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP4Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": true
+            }
+        }
+    }
+}

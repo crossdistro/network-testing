@@ -1,0 +1,39 @@
+{
+    "netresolve-sequential": {
+        "status": "PASS",
+        "properties": {
+            "IP4Connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "IP6Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "Errors": {
+                "status": "PASS",
+                "value": 0
+            },
+            "V6PreferredDelay": {
+                "status": "PASS",
+                "value": 15.032451152801514
+            },
+            "ConnectionCleanup": {
+                "status": "INFO",
+                "value": true
+            },
+            "IP6Connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": false
+            },
+            "IP4Listener": {
+                "status": "PASS",
+                "value": true
+            }
+        }
+    }
+}

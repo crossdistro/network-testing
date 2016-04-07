@@ -3,40 +3,49 @@
 import os
 import json
 import shutil
+import glob
+import sys
 
 import jinja2
 import click
 import yaml
 
+
 SOURCE_FILES = {
-    'schema': 'test-client-server-schema',
-    'results': 'test-client-server',
-    'result_colors': 'result-colors',
+    'results': 'results/*.json',
+    'schema': 'test-client-server-schema.yaml',
+    'result_colors': 'result-colors.yaml',
 }
 
+def load_file(filename):
+    print('Loading', filename, file=sys.stderr)
+    if filename.endswith('.json'):
+        with open(filename, encoding='utf-8') as file:
+            return json.load(file)
+    elif filename.endswith('.yaml'):
+        with open(filename, encoding='utf-8') as file:
+            return yaml.safe_load(file)
+    else:
+        raise ValueError('Unknown extension: ' + filename)
+
 def load_data(filename_base):
-    try:
-        json_file = open(filename_base + '.json', encoding='utf-8')
-    except FileNotFoundError:
-        json_file = None
-    try:
-        yaml_file = open(filename_base + '.yaml', encoding='utf-8')
-    except FileNotFoundError:
-        yaml_file = None
-    try:
-        if json_file and yaml_file:
-            raise ValueError(filename_base + ": both JSON and YAML exist")
-        elif json_file:
-            return json.load(json_file)
-        elif yaml_file:
-            return yaml.load(yaml_file)
-        else:
-            raise ValueError(filename_base + ": neither JSON nor YAML exist")
-    finally:
-        if json_file:
-            json_file.close()
-        if yaml_file:
-            yaml_file.close()
+    if '*' in filename_base:
+        result = {}
+        filenames = glob.glob(filename_base)
+        if not filenames:
+            raise FileNotFoundError(filename_base)
+        for filename in filenames:
+            data = load_file(filename)
+            try:
+                data = dict(data)
+            except ValueError:
+                raise ValueError('Data needs to be a mapping: ', filename)
+            if not data.keys().isdisjoint(result.keys()):
+                raise ValueError('Overwriting data: ', filename)
+            result.update(data)
+        return result
+    else:
+        return load_file(filename_base)
 
 base_path = os.path.dirname(__file__)
 

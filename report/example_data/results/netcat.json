@@ -1,0 +1,31 @@
+{
+    "netcat": {
+        "status": "FAIL",
+        "properties": {
+            "IP4Connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "IP6Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "Errors": {
+                "status": "FAIL",
+                "value": 1
+            },
+            "IP6Connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "IP4Listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "ParallelConnect": {
+                "status": "INFO",
+                "value": false
+            }
+        }
+    }
+}
