@@ -19,7 +19,7 @@ Usage
 
 To run on included example data, run:
 
-    ./build.py
+    ./build.py ./example_data/*
 
 To see all options, run ./build.py --help
 
