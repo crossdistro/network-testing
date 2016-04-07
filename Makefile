@@ -4,7 +4,11 @@ FEDORA_VERSION="f25"
 all:
 
 run:
-	sudo ./test-client-server
+	-sudo ./test-client-server --outdir data
+
+data/.done:
+	$(MAKE) run
+	touch $@
 
 local: dist spec
 	fedpkg local
@@ -35,3 +39,10 @@ clean:
 vagrant:
 	vagrant up --provision
 	vagrant ssh
+
+html: data/.done
+	rm -f report/output/index.html
+	report/build.py data/test-client-server-*.json
+
+show-html: html
+	xdg-open report/output/index.html

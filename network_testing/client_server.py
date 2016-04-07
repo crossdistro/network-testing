@@ -7,6 +7,7 @@ import collections, functools, itertools
 import argparse
 import socket
 import re
+import json
 
 import debug
 import ptrace.debugger
@@ -21,63 +22,79 @@ testcase_path = os.path.join(data_path, 'testcases', 'client-server')
 SOCKET_OPERATIONS = set(['bind', 'listen', 'accept', 'connect', 'getsockopt', 'shutdown', 'close'])
 PROCESS_SYSCALLS = set(['close', 'execve', 'fork', 'clone'])
 
-class Property(object):
-    success = lambda self: None
+registered_properties = []
 
-    def __init__(self, arg):
-        self.arg = arg
+def register_property(cls):
+    registered_properties.append(cls)
+    return cls
+
+class Property(object):
+    name = ""
+    values = {False: {}, True: {}}
+
+    def __init__(self, value):
+        self.value = value
 
     def __str__(self):
-        return self.template.format(**vars(self))
+        return "{.name}".format(self)
 
     def __repr__(self):
         return repr(str(self))
 
     @property
-    def success(self):
-        return bool(self.arg)
+    def status(self):
+        return bool(self.value)
 
+@register_property
 class Errors(Property):
-    template = "Number of errors: {arg}"
+    name = "Number of errors"
+    values = {}
 
     @property
-    def success(self):
-        return not self.arg
+    def status(self):
+        return not self.value
 
+@register_property
 class IP4Listener(Property):
-    template = "Listens on IPv4: {arg}"
+    name = "Listens on IPv4"
 
+@register_property
 class IP6Listener(Property):
-    template = "Listens on IPv6: {arg}"
+    name = "Listens on IPv6"
 
+@register_property
 class IP4Connection(Property):
-    template = "Attempts IPv4 connection: {arg}"
+    name = "Attempts IPv4 connection"
 
+@register_property
 class IP6Connection(Property):
-    template = "Attempts IPv6 connection: {arg}"
+    name = "Attempts IPv6 connection"
 
+@register_property
 class ParallelConnect(Property):
-    template = "Connection method is {method}. {description}"
-    success = None
+    name = "Connection method is parallel"
+    values = {
+        False: {
+            'description': "This is a classic dual-stack connection method resulting in a significant timeout when the preferred address family fails silently.",
+        },
+        True: {
+            'description': "This is a happy eyeballs style dual-stack connection method resulting in fast fallback when the preferred address family fails silently.",
+        },
+    }
+    status = None
 
-    def __init__(self, flag):
-        if flag:
-            self.method = "parallel"
-            self.description = "This is a happy eyeballs style dual-stack connection method resulting in fast fallback when the preferred address family fails silently."
-        else:
-            self.method = "sequential"
-            self.description = "This is a classic dual-stack connection method resulting in a significant timeout when the preferred address family fails silently."
-
+@register_property
 class V6PreferredDelay(Property):
     def __str__(self):
-        if self.arg is None:
+        if self.value is None:
             return "IPv6 isn't preferred or fallback to IPv4 doesn't work."
         else:
-            return "IPv6 is preferred and fallback to IPv4 takes {arg:.3f} seconds.".format(**vars(self))
+            return "IPv6 is preferred and fallback to IPv4 takes {value:.3f} seconds.".format(**vars(self))
 
+@register_property
 class ConnectionCleanup(Property):
-    template = "Connection was shut down and closed: {arg}"
-    success = None
+    name = "Connection was shut down and closed"
+    status = None
 
 class Scenario(object):
     client = server = None
@@ -313,9 +330,9 @@ class TestCase:
         errors = Errors(0)
         for scenario in self.scenarios:
             scenario.run()
-            errors.arg += len(scenario.errors)
+            errors.value += len(scenario.errors)
         self.add_property(errors)
-        self.result = len([prop for prop in self.properties.values() if prop.success is False]) == 0
+        self.result = len([prop for prop in self.properties.values() if prop.status is False]) == 0
 
     def add_property(self, prop):
         self.properties[type(prop)] = prop
@@ -326,8 +343,8 @@ class TestCase:
         for scenario in self.scenarios:
             scenario.report()
         print("  Properties:")
-        for text, success in sorted([(str(value), value.success) for value in self.properties.values()]):
-            print("    {} ({})".format(text, result_str[success]))
+        for text, status in sorted([(str(value), value.status) for value in self.properties.values()]):
+            print("    {} ({})".format(text, result_str[status]))
         print("  Result: {}".format(result_str[self.result]))
         print()
 
@@ -341,6 +358,23 @@ class TestSuite:
         for testcase in self.testcases:
             testcase.run()
         self.result = not [testcase.result for testcase in self.testcases if testcase.result is False]
+
+    def save(self, outdir):
+        schema = {}
+        for cls in registered_properties:
+            prop = schema[cls.__name__] = {'name': cls.name, 'values': cls.values}
+        with open("test-client-server-schema.json", 'w') as stream:
+            json.dump(schema, stream, indent=4, separators=(',', ': '))
+            print(file=stream)
+
+        for testcase in self.testcases:
+            item = {'status': result_str[testcase.result]}
+            props = item['properties'] = {}
+            for prop in testcase.properties.values():
+                props[type(prop).__name__] = {'value': prop.value, 'status': result_str[prop.status]}
+            with open(os.path.join(outdir, "test-client-server-{}.json".format(testcase.name)), 'w') as stream:
+                json.dump({testcase.name: item}, stream, indent=4, separators=(',', ': '))
+                print(file=stream)
 
     def report(self):
         print()
@@ -359,6 +393,7 @@ def main():
     parser.add_argument("--list-testcases", "-l", action="store_true", help="List testcases and scenarios.")
     parser.add_argument("--list-scenarios", action="store_true", help="List testcases and scenarios.")
     parser.add_argument("--deps", action="store_true", help="List dependencies.")
+    parser.add_argument("--outdir", default=".", help="List dependencies.")
     parser.add_argument("testcases", nargs="?")
     parser.add_argument("scenarios", nargs="?")
     options = parser.parse_args()
@@ -386,6 +421,7 @@ def main():
         exit(0)
     else:
         suite.run()
+        suite.save(options.outdir)
         suite.report()
 
     exit(0 if suite.result else 1)
