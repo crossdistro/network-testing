@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 from __future__ import print_function
 
 import os, sys, subprocess, errno
@@ -360,10 +358,12 @@ class TestSuite:
         self.result = not [testcase.result for testcase in self.testcases if testcase.result is False]
 
     def save(self, outdir):
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
         schema = {}
         for cls in registered_properties:
             prop = schema[cls.__name__] = {'name': cls.name, 'values': cls.values}
-        with open("test-client-server-schema.json", 'w') as stream:
+        with open(os.path.join(outdir, "schema-test-client-server.json"), 'w') as stream:
             json.dump(schema, stream, indent=4, separators=(',', ': '))
             print(file=stream)
 
@@ -393,7 +393,7 @@ def main():
     parser.add_argument("--list-testcases", "-l", action="store_true", help="List testcases and scenarios.")
     parser.add_argument("--list-scenarios", action="store_true", help="List testcases and scenarios.")
     parser.add_argument("--deps", action="store_true", help="List dependencies.")
-    parser.add_argument("--outdir", default=".", help="List dependencies.")
+    parser.add_argument("--outdir", default="./json-output/", help="List dependencies.")
     parser.add_argument("testcases", nargs="?")
     parser.add_argument("scenarios", nargs="?")
     options = parser.parse_args()

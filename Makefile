@@ -4,9 +4,12 @@ FEDORA_VERSION="f25"
 all:
 
 run:
-	-sudo ./test-client-server --outdir data
+	rm -rf json-output
+	mkdir json-output
+	-sudo ./test-client-server --outdir json-output
 
-data/.done:
+json-output/.done:
+	mkdir -p json-output
 	$(MAKE) run
 	touch $@
 
@@ -34,15 +37,16 @@ network-testing.spec: network-testing.spec.in test-client-server Makefile
 
 clean:
 	rm -rf dist
+	rm -rf json-output
+	rm -rf html-output
 	rm -rf *.src.rpm
 
 vagrant:
 	vagrant up --provision
 	vagrant ssh
 
-html: data/.done
-	rm -f report/output/index.html
-	report/build.py data/test-client-server-*.json
+html: json-output/.done
+	./test-client-server-genhtml
 
 show-html: html
-	xdg-open report/output/index.html
+	xdg-open html-output/index.html

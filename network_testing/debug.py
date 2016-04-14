@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import ptrace.debugger
 import ptrace.func_call
 import ptrace.syscall

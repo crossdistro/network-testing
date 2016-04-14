@@ -7,3 +7,5 @@
 /network-testing.spec
 /x86_64
 .vagrant/
+html-output
+json-output

@@ -1,0 +1,15 @@
+#!/usr/bin/python
+
+from __future__ import print_function
+
+import os, sys, glob
+from network_testing.client_server_genhtml import build
+
+path = "./json-output/test-client-server-*.json"
+files = glob.glob(path)
+
+if not files:
+    print("File not found: {}".format(path), file=sys.stderr)
+
+sys.argv = [sys.argv[0]] + files
+build()
