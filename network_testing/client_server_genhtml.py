@@ -10,13 +10,10 @@ import glob
 import sys
 
 import jinja2
-import click
 import yaml
 
 if sys.version_info[0] == 2:
     from io import open
-
-data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
 
 STATIC_DATA_FILES = {
     'schema': 'test-client-server-schema.yaml',
@@ -34,28 +31,10 @@ def load_data(filename):
     else:
         raise ValueError('Unknown extension: ' + filename)
 
-@click.command(help=__doc__)
-@click.option('-s', '--staticdatadir', default=os.path.join(data_path, 'report/static_data/'),
-              help='Alternate directory containing static data such as test descriptions')
-@click.option('-o', '--outdir', default=os.path.join('.', 'html-output/'),
-              help='Directory for output (will be overwritten)')
-@click.option('--templatedir', default=os.path.join(data_path, 'report/templates/'),
-              help='Directory containing HTML templates')
-@click.argument('input_file', nargs=-1)
 def build(staticdatadir, outdir, templatedir, input_file):
-    if not input_file:
-        raise click.UsageError('No files given. Try running: {} {}'.format(
-              sys.argv[0], os.path.join(data_path, 'example_data/*')))
-        print(__doc__, file=sys.stderr)
-        print(file=sys.stderr)
-        print('No files given. Try running:',
-              sys.argv[0], os.path.join(data_path, 'example_data/*'),
-              file=sys.stderr)
-        return
-
     try:
         shutil.rmtree(outdir)
-    except FileNotFoundError:
+    except Exception:
         pass
     os.makedirs(outdir)
 
@@ -89,6 +68,3 @@ def build(staticdatadir, outdir, templatedir, input_file):
 
     print('Wrote to', os.path.abspath(outdir))
 
-
-if __name__ == '__main__':
-    build()
