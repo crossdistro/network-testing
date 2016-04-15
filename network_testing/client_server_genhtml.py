@@ -8,20 +8,19 @@ import json
 import shutil
 import glob
 import sys
-
+import argparse
 import jinja2
-import click
+
 import yaml
 
 if sys.version_info[0] == 2:
     from io import open
 
-data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
-
 STATIC_DATA_FILES = {
     'schema': 'test-client-server-schema.yaml',
     'result_colors': 'result-colors.yaml',
 }
+data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
 
 def load_data(filename):
     print('Loading', filename, file=sys.stderr)
@@ -34,28 +33,10 @@ def load_data(filename):
     else:
         raise ValueError('Unknown extension: ' + filename)
 
-@click.command(help=__doc__)
-@click.option('-s', '--staticdatadir', default=os.path.join(data_path, 'report/static_data/'),
-              help='Alternate directory containing static data such as test descriptions')
-@click.option('-o', '--outdir', default=os.path.join('.', 'html-output/'),
-              help='Directory for output (will be overwritten)')
-@click.option('--templatedir', default=os.path.join(data_path, 'report/templates/'),
-              help='Directory containing HTML templates')
-@click.argument('input_file', nargs=-1)
 def build(staticdatadir, outdir, templatedir, input_file):
-    if not input_file:
-        raise click.UsageError('No files given. Try running: {} {}'.format(
-              sys.argv[0], os.path.join(data_path, 'example_data/*')))
-        print(__doc__, file=sys.stderr)
-        print(file=sys.stderr)
-        print('No files given. Try running:',
-              sys.argv[0], os.path.join(data_path, 'example_data/*'),
-              file=sys.stderr)
-        return
-
     try:
         shutil.rmtree(outdir)
-    except FileNotFoundError:
+    except Exception:
         pass
     os.makedirs(outdir)
 
@@ -89,6 +70,24 @@ def build(staticdatadir, outdir, templatedir, input_file):
 
     print('Wrote to', os.path.abspath(outdir))
 
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-s', '--staticdatadir', action='store', default=os.path.join(data_path, 'report/static_data/'),
+            help='Alternate directory containing static data such as test descriptions')
+    parser.add_argument('-o', '--output', action='store', default=os.path.join('.', 'html-output/'),
+            help='Directory for output (will be overwritten)')
+    parser.add_argument('-t', '--templatedir', action='store', default=os.path.join(data_path, 'report/templates/'),
+            help='Directory containing HTML templates')
+    parser.add_argument('input_file', nargs='*', help='Files what will be used as input')
+    args = parser.parse_args()
 
-if __name__ == '__main__':
-    build()
+    path = "./json-output/test-client-server-*.json"
+    files = glob.glob(path)
+    if not files:
+        print("File not found: {}".format(path), file=sys.stderr)
+
+    input_file = args.input_file + files
+    if len(input_file) < 1:
+        print("No input JSON files to parse nothing in {} and also nothing from CMD line".format(path), file=sys.stderr)
+        sys.exit(1)
+    build(args.staticdatadir, args.output, args.templatedir, input_file)
