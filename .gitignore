@@ -9,3 +9,6 @@
 .vagrant/
 html-output
 json-output
+
+# Sphinx built documentation
+docs/_build
