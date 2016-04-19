@@ -11,15 +11,13 @@ import sys
 import argparse
 import jinja2
 
-import yaml
-
 from client_server import registered_properties
 
 if sys.version_info[0] == 2:
     from io import open
 
 STATIC_DATA_FILES = {
-    'result_colors': 'result-colors.yaml',
+    'result_colors': 'result-colors.json',
 }
 data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
 
@@ -28,9 +26,6 @@ def load_data(filename):
     if filename.endswith('.json'):
         with open(filename, encoding='utf-8') as file:
             return json.load(file)
-    elif filename.endswith('.yaml'):
-        with open(filename, encoding='utf-8') as file:
-            return yaml.safe_load(file)
     else:
         raise ValueError('Unknown extension: ' + filename)
 
