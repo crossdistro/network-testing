@@ -60,11 +60,11 @@
                 </dt>
                 <dd>
                     <p>{{ feature.description }}</p>
-                    {% if 'values' in feature %}
-                        {% for name, info in feature['values'].items() | sort %}
+                    {% if feature.values %}
+                        {% for name, info in feature.values.items() | sort %}
                             <p>
                                 <b>{{ result_value(feature.type, name) }}</b>:
-                                {{ info.description }}
+                                {{ info['description'] }}
                             <p>
                         {% endfor %}
                     {% endif %}

@@ -27,8 +27,9 @@ def register_property(cls):
     return cls
 
 class Property(object):
-    name = ""
-    values = {False: {}, True: {}}
+    description = ""
+    type = "bool"
+    values = None
 
     def __init__(self, value):
         self.value = value
@@ -44,33 +45,54 @@ class Property(object):
         return bool(self.value)
 
 @register_property
-class Errors(Property):
-    name = "Number of errors"
-    values = {}
-
-    @property
-    def status(self):
-        return not self.value
-
-@register_property
 class IP4Listener(Property):
-    name = "Listens on IPv4"
+    name = 'ip4-listener'
+    description = "Listens on IPv4"
+    short = "L4"
 
 @register_property
 class IP6Listener(Property):
-    name = "Listens on IPv6"
+    name = 'ip6-listener'
+    description = "Listens on IPv6"
+    short = "L6"
 
 @register_property
 class IP4Connection(Property):
-    name = "Attempts IPv4 connection"
+    name = 'ip4-connection'
+    description = "Attempts IPv4 connection"
+    short = "C4"
 
 @register_property
 class IP6Connection(Property):
-    name = "Attempts IPv6 connection"
+    name = 'ip6-connection'
+    description = "Attempts IPv6 connection"
+    short = "C6"
+
+@register_property
+class V6PreferredDelay(Property):
+    name = 'ip6-preferred-delay'
+    description = "Delay that ensures IPv6 preference"
+    short = "D6"
+    type = "float"
+
+    def __str__(self):
+        if self.value is None:
+            return "IPv6 isn't preferred or fallback to IPv4 doesn't work."
+        else:
+            return "IPv6 is preferred and fallback to IPv4 takes {value:.3f} seconds.".format(**vars(self))
+
+@register_property
+class ConnectionCleanup(Property):
+    name = 'connection-cleanup'
+    description = "Connection was shut down and closed"
+    short = "CC"
+    status = None
 
 @register_property
 class ParallelConnect(Property):
-    name = "Connection method is parallel"
+    name = 'parallel-connect'
+    description = "Connection method is parallel"
+    short = "PC"
     values = {
         False: {
             'description': "This is a classic dual-stack connection method resulting in a significant timeout when the preferred address family fails silently.",
@@ -82,17 +104,15 @@ class ParallelConnect(Property):
     status = None
 
 @register_property
-class V6PreferredDelay(Property):
-    def __str__(self):
-        if self.value is None:
-            return "IPv6 isn't preferred or fallback to IPv4 doesn't work."
-        else:
-            return "IPv6 is preferred and fallback to IPv4 takes {value:.3f} seconds.".format(**vars(self))
+class Errors(Property):
+    name = 'errors'
+    description = "Number of errors"
+    short = "Err"
+    type = "int"
 
-@register_property
-class ConnectionCleanup(Property):
-    name = "Connection was shut down and closed"
-    status = None
+    @property
+    def status(self):
+        return not self.value
 
 class Scenario(object):
     client = server = None
@@ -360,18 +380,11 @@ class TestSuite:
     def save(self, outdir):
         if not os.path.isdir(outdir):
             os.mkdir(outdir)
-        schema = {}
-        for cls in registered_properties:
-            prop = schema[cls.__name__] = {'name': cls.name, 'values': cls.values}
-        with open(os.path.join(outdir, "schema-test-client-server.json"), 'w') as stream:
-            json.dump(schema, stream, indent=4, separators=(',', ': '))
-            print(file=stream)
-
         for testcase in self.testcases:
             item = {'status': result_str[testcase.result]}
             props = item['properties'] = {}
             for prop in testcase.properties.values():
-                props[type(prop).__name__] = {'value': prop.value, 'status': result_str[prop.status]}
+                props[prop.name] = {'value': prop.value, 'status': result_str[prop.status]}
             with open(os.path.join(outdir, "test-client-server-{}.json".format(testcase.name)), 'w') as stream:
                 json.dump({testcase.name: item}, stream, indent=4, separators=(',', ': '))
                 print(file=stream)

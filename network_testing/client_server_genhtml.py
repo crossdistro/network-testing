@@ -13,11 +13,12 @@ import jinja2
 
 import yaml
 
+from client_server import registered_properties
+
 if sys.version_info[0] == 2:
     from io import open
 
 STATIC_DATA_FILES = {
-    'schema': 'test-client-server-schema.yaml',
     'result_colors': 'result-colors.yaml',
 }
 data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
@@ -42,6 +43,8 @@ def build(staticdatadir, outdir, templatedir, input_file):
 
     data = {ident: load_data(os.path.join(staticdatadir, filename))
             for ident, filename in STATIC_DATA_FILES.items()}
+    data['schema'] = registered_properties
+
     data['results'] = results = {}
     for filename in input_file:
         result = load_data(filename)
