@@ -8,7 +8,7 @@ import socket
 import logging
 log = logging.getLogger()
 
-import patch
+from . import patch
 
 SOCKET_OPERATIONS = set(['bind', 'listen', 'accept', 'connect', 'getsockopt', 'shutdown', 'close'])
 PROCESS_SYSCALLS = set(['close', 'execve', 'fork', 'clone'])

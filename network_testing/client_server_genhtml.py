@@ -11,7 +11,7 @@ import sys
 import argparse
 import jinja2
 
-from client_server import registered_properties
+from .client_server import registered_properties
 
 if sys.version_info[0] == 2:
     from io import open

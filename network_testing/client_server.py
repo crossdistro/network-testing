@@ -7,7 +7,7 @@ import socket
 import re
 import json
 
-import debug
+from . import debug
 import ptrace.debugger
 
 import logging

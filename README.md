@@ -12,7 +12,7 @@ for features and bugs.
 
 Dependencies:
 
- * Python 2.7 (going to support for 3.4)
+ * Python 2.7/3.4
  * python-ptrace 0.8.1
  * netresolve-compat from git master
  * iproute2 with netns support
