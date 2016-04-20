@@ -9,10 +9,6 @@ from .test_suite import TestCase, TestSuite, testcase_path
 
 
 def main():
-    if os.geteuid() != 0:
-        print("You have to be root to run the test driver. Please use sudo.")
-        exit(1)
-
     parser = argparse.ArgumentParser(description="Test driver for client-server networking applications.")
     parser.add_argument("--debug", "-d", action="store_true", help="Print debug messages.")
     parser.add_argument("--list-testcases", "-l", action="store_true", help="List testcases and scenarios.")
@@ -52,6 +48,10 @@ def main():
             print(dependency)
         exit(0)
     else:
+        if os.geteuid() != 0:
+            print("You have to be root to run the test driver. Please use sudo.")
+            exit(1)
+
         suite.run()
         suite.save(options.outdir)
         suite.report()
