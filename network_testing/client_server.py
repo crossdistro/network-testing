@@ -6,13 +6,13 @@ import argparse
 import socket
 import re
 import json
+import logging
 
-from . import debug
 import ptrace.debugger
 
-import logging
-logging.basicConfig(level=logging.INFO, format="%(message)s")
-log = logging.getLogger('tests')
+from .logger import logger
+from . import debug
+
 
 data_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
 testcase_path = os.path.join(data_path, 'testcases', 'client-server')
@@ -134,7 +134,7 @@ class Scenario(object):
         # Run entities and collect syscalls.
         self.prepare()
         try:
-            log.info("\n*** {} / {} ***\n".format(self.testcase.name, self.name))
+            logger.info("\n*** {} / {} ***\n".format(self.testcase.name, self.name))
 
             try:
                 self.server = self.start(debugger, "server")
@@ -167,9 +167,9 @@ class Scenario(object):
                 if event.exitcode != self.expected_exitcodes[event.origin]:
                     self.error("Unexpected {} exit code {}.".format(event.origin, event.exitcode))
                 if event.process == self.server:
-                    log.debug("Server exit code is {}.".format(event.exitcode))
+                    logger.debug("Server exit code is {}.".format(event.exitcode))
                 if event.process == self.client:
-                    log.debug("Client exit code is {}.".format(event.exitcode))
+                    logger.debug("Client exit code is {}.".format(event.exitcode))
             elif event.name == 'listen':
                 if event.origin != 'server':
                     continue
