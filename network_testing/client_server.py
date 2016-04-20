@@ -1,11 +1,12 @@
 from __future__ import print_function
 
-import os, sys, subprocess, errno
-import collections, functools, itertools
 import argparse
-import socket
-import re
+import errno
 import json
+import os
+import re
+import socket
+import subprocess
 import logging
 
 import ptrace.debugger
