@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='network-testing',
@@ -11,6 +11,18 @@ setup(
     author_email='pavlix@pavlix.net',
     url='https://github.com/pavlix/network-testing',
     packages=['network_testing'],
-    scripts=['test-client-server', 'test-client-server-genhtml'],
-    package_data={'network_testing': ['data/hosts', 'data/testcases/*/*/*', 'data/report/templates/*', 'data/report/static_data/*']},
+    entry_points={
+        'console_scripts': [
+            'test-client-server = network_testing.client_server:main',
+            'test-client-server-genhtml = network_testing.client_server_genhtml:main'
+        ]
+    },
+    package_data={
+        'network_testing': [
+            'data/hosts',
+            'data/testcases/*/*/*',
+            'data/report/templates/*',
+            'data/report/static_data/*'
+        ]
+    },
 )
