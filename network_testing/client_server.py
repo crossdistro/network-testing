@@ -8,9 +8,6 @@ import subprocess
 
 from .test_suite import TestCase, TestSuite, testcase_path
 
-SOCKET_OPERATIONS = set(['bind', 'listen', 'accept', 'connect', 'getsockopt', 'shutdown', 'close'])
-PROCESS_SYSCALLS = set(['close', 'execve', 'fork', 'clone'])
-
 
 def main():
     if os.geteuid() != 0:
