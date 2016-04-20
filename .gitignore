@@ -12,3 +12,6 @@ json-output
 
 # Sphinx built documentation
 docs/_build
+
+# Ignore PyCharm files
+.idea
