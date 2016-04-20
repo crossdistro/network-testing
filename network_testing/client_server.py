@@ -4,7 +4,6 @@ from __future__ import print_function
 import argparse
 import logging
 import os
-import subprocess
 
 from .test_suite import TestCase, TestSuite, testcase_path
 
@@ -40,10 +39,17 @@ def main():
             print(scenario.name)
         exit(0)
     elif options.deps:
+        dependencies = set()
         for testcase in suite.testcases:
-            path = os.path.join(testcase_path, testcase.name, "deps")
-            if os.path.isfile(path):
-                subprocess.check_call(['cat', path])
+            try:
+                with open(os.path.join(testcase_path, testcase.name, 'deps')) as deps_file:
+                    for dependency in deps_file.read().splitlines():
+                        if dependency:
+                            dependencies.add(dependency)
+            except IOError:
+                pass
+        for dependency in sorted(dependencies):
+            print(dependency)
         exit(0)
     else:
         suite.run()
