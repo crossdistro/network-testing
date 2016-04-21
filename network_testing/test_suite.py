@@ -415,5 +415,3 @@ class TestSuite:
         print()
         for testcase in self.testcases:
             testcase.report()
-        print("Overall result: {}".format(result_str[self.result]))
-        print()
