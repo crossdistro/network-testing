@@ -41,6 +41,8 @@ class Property(object):
     def status(self):
         return bool(self.value)
 
+    def to_dict(self):
+        return {'value': self.value, 'status': result_str[self.status]}
 
 @register_property
 class IP4Listener(Property):
@@ -381,6 +383,16 @@ class TestCase:
         print("  Result: {}".format(result_str[self.result]))
         print()
 
+    def to_dict(self):
+        result = {'status': result_str[self.result]}
+        props = result['properties'] = {prop.name: prop.to_dict() for prop in self.properties.values()}
+        return result
+
+    def save(self, outdir):
+        with open(os.path.join(outdir, "test-client-server-{}.json".format(self.name)), 'w') as stream:
+            json.dump({self.name: self.to_dict()}, stream, indent=4, separators=(',', ': '))
+            print(file=stream)
+
 
 class TestSuite:
     def __init__(self, testcases=None, scenarios=None):
@@ -397,13 +409,7 @@ class TestSuite:
         if not os.path.isdir(outdir):
             os.mkdir(outdir)
         for testcase in self.testcases:
-            item = {'status': result_str[testcase.result]}
-            props = item['properties'] = {}
-            for prop in testcase.properties.values():
-                props[prop.name] = {'value': prop.value, 'status': result_str[prop.status]}
-            with open(os.path.join(outdir, "test-client-server-{}.json".format(testcase.name)), 'w') as stream:
-                json.dump({testcase.name: item}, stream, indent=4, separators=(',', ': '))
-                print(file=stream)
+            testcase.save(outdir)
 
     def report(self):
         print()
