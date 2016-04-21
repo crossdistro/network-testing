@@ -138,6 +138,7 @@ class Scenario(object):
         # this import is here to be able to run the client_server.py to anything except running tests also without
         # installed dependencies. To generate SRPM one has to run the client_server.py and it tracebacks without ptrace
         from . import debug
+        import ptrace.debugger
 
         debugger = debug.SyscallDebugger()
 
