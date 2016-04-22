@@ -1,71 +1,47 @@
 {
     "ssh": {
         "status": "FAIL",
-        "properties": {
-            "ip6-listener": {
-                "status": "PASS",
-                "value": true
-            },
-            "ip6-connection": {
-                "status": "FAIL",
-                "value": false
-            },
-            "ip4-listener": {
-                "status": "PASS",
-                "value": true
-            },
-            "parallel-connect": {
-                "status": "INFO",
-                "value": false
-            },
-            "errors": {
-                "status": "FAIL",
-                "value": 1
-            },
-            "ip4-connection": {
-                "status": "FAIL",
-                "value": false
-            }
-        },
         "scenarios": [
             {
                 "errors": [],
+                "name": "loopback",
                 "connections": [
                     {
                         "events": [
                             {
-                                "str": "[5.540 client 20214] socket(AF_INET6, SOCK_STREAM, 6) = 6"
+                                "str": "[4.172 client 25040] socket(AF_INET6, SOCK_STREAM, 6) = 6"
                             },
                             {
-                                "str": "[5.543 client 20214] connect(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0001>, sin6_scope_ip=0>, 28) = 0"
+                                "str": "[4.175 client 25040] connect(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0001>, sin6_scope_ip=0>, 28) = 0"
                             }
                         ]
                     }
                 ],
+                "description": "Isolated host with IPv4 and IPv6 loopback.",
                 "listeners": [
                     {
                         "events": [
                             {
-                                "str": "[3.765 server 20211] socket(AF_INET6, SOCK_STREAM, 6) = 6"
+                                "str": "[2.626 server 25037] socket(AF_INET6, SOCK_STREAM, 6) = 6"
                             },
                             {
-                                "str": "[3.788 server 20211] bind(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                                "str": "[2.648 server 25037] bind(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
                             },
                             {
-                                "str": "[3.793 server 20211] listen(6, 128) = 0"
+                                "str": "[2.653 server 25037] listen(6, 128) = 0"
                             }
                         ]
                     },
                     {
                         "events": [
                             {
-                                "str": "[4.011 server 20211] socket(AF_INET, SOCK_STREAM, 6) = 8"
+                                "str": "[2.805 server 25037] socket(AF_INET, SOCK_STREAM, 6) = 8"
                             },
                             {
-                                "str": "[4.016 server 20211] bind(8, <sockaddr_in sin_family=2, sin_port=22, sin_addr=0.0.0.0>, 16) = 0"
+                                "str": "[2.805 server 25037] bind(8, <sockaddr_in sin_family=2, sin_port=22, sin_addr=0.0.0.0>, 16) = 0"
                             },
                             {
-                                "str": "[4.018 server 20211] listen(8, 128) = 0"
+                                "str": "[2.808 server 25037] listen(8, 128) = 0"
                             }
                         ]
                     }
@@ -73,42 +49,44 @@
             },
             {
                 "errors": [],
+                "name": "dualstack",
                 "connections": [
                     {
                         "events": [
                             {
-                                "str": "[6.051 client 20276] socket(AF_INET6, SOCK_STREAM, 6) = 6"
+                                "str": "[4.284 client 25105] socket(AF_INET6, SOCK_STREAM, 6) = 6"
                             },
                             {
-                                "str": "[6.061 client 20276] connect(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = 0"
+                                "str": "[4.287 client 25105] connect(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = 0"
                             }
                         ]
                     }
                 ],
+                "description": "Hosts connected via IPv4 and IPv6.",
                 "listeners": [
                     {
                         "events": [
                             {
-                                "str": "[4.745 server 20273] socket(AF_INET6, SOCK_STREAM, 6) = 6"
+                                "str": "[3.017 server 25102] socket(AF_INET6, SOCK_STREAM, 6) = 6"
                             },
                             {
-                                "str": "[4.746 server 20273] bind(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                                "str": "[3.032 server 25102] bind(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
                             },
                             {
-                                "str": "[4.747 server 20273] listen(6, 128) = 0"
+                                "str": "[3.037 server 25102] listen(6, 128) = 0"
                             }
                         ]
                     },
                     {
                         "events": [
                             {
-                                "str": "[4.840 server 20273] socket(AF_INET, SOCK_STREAM, 6) = 8"
+                                "str": "[3.156 server 25102] socket(AF_INET, SOCK_STREAM, 6) = 8"
                             },
                             {
-                                "str": "[4.841 server 20273] bind(8, <sockaddr_in sin_family=2, sin_port=22, sin_addr=0.0.0.0>, 16) = 0"
+                                "str": "[3.160 server 25102] bind(8, <sockaddr_in sin_family=2, sin_port=22, sin_addr=0.0.0.0>, 16) = 0"
                             },
                             {
-                                "str": "[4.841 server 20273] listen(8, 128) = 0"
+                                "str": "[3.160 server 25102] listen(8, 128) = 0"
                             }
                         ]
                     }
@@ -120,36 +98,64 @@
                         "str": "Client timeout occured."
                     }
                 ],
+                "name": "v6dropped",
                 "connections": [],
+                "description": "Hosts connected via IPv4 and defunct IPv6 (packets dropped by firewall).",
                 "listeners": [
                     {
                         "events": [
                             {
-                                "str": "[3.987 server 20728] socket(AF_INET6, SOCK_STREAM, 6) = 6"
+                                "str": "[3.286 server 25568] socket(AF_INET6, SOCK_STREAM, 6) = 6"
                             },
                             {
-                                "str": "[3.988 server 20728] bind(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                                "str": "[3.287 server 25568] bind(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
                             },
                             {
-                                "str": "[3.989 server 20728] listen(6, 128) = 0"
+                                "str": "[3.289 server 25568] listen(6, 128) = 0"
                             }
                         ]
                     },
                     {
                         "events": [
                             {
-                                "str": "[4.100 server 20728] socket(AF_INET, SOCK_STREAM, 6) = 8"
+                                "str": "[3.394 server 25568] socket(AF_INET, SOCK_STREAM, 6) = 8"
                             },
                             {
-                                "str": "[4.118 server 20728] bind(8, <sockaddr_in sin_family=2, sin_port=22, sin_addr=0.0.0.0>, 16) = 0"
+                                "str": "[3.395 server 25568] bind(8, <sockaddr_in sin_family=2, sin_port=22, sin_addr=0.0.0.0>, 16) = 0"
                             },
                             {
-                                "str": "[4.123 server 20728] listen(8, 128) = 0"
+                                "str": "[3.395 server 25568] listen(8, 128) = 0"
                             }
                         ]
                     }
                 ]
             }
-        ]
+        ],
+        "properties": {
+            "errors": {
+                "value": 1,
+                "status": "FAIL"
+            },
+            "ip4-listener": {
+                "value": true,
+                "status": "PASS"
+            },
+            "ip6-connection": {
+                "value": false,
+                "status": "FAIL"
+            },
+            "parallel-connect": {
+                "value": false,
+                "status": "INFO"
+            },
+            "ip4-connection": {
+                "value": false,
+                "status": "FAIL"
+            },
+            "ip6-listener": {
+                "value": true,
+                "status": "PASS"
+            }
+        }
     }
 }

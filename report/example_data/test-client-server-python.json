@@ -1,32 +1,6 @@
 {
     "python": {
         "status": "FAIL",
-        "properties": {
-            "ip6-listener": {
-                "status": "PASS",
-                "value": true
-            },
-            "ip6-connection": {
-                "status": "FAIL",
-                "value": false
-            },
-            "ip4-listener": {
-                "status": "PASS",
-                "value": true
-            },
-            "parallel-connect": {
-                "status": "INFO",
-                "value": false
-            },
-            "errors": {
-                "status": "FAIL",
-                "value": 3
-            },
-            "ip4-connection": {
-                "status": "FAIL",
-                "value": false
-            }
-        },
         "scenarios": [
             {
                 "errors": [
@@ -34,45 +8,47 @@
                         "str": "Unexpected client exit code 1."
                     }
                 ],
+                "name": "loopback",
                 "connections": [
                     {
                         "events": [
                             {
-                                "str": "[9.313 client 19332] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 7"
+                                "str": "[6.772 client 24161] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 7"
                             },
                             {
-                                "str": "[9.391 client 19332] connect(7, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0001>, sin6_scope_ip=0>, 28) = 0"
+                                "str": "[6.784 client 24161] connect(7, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0001>, sin6_scope_ip=0>, 28) = 0"
                             },
                             {
-                                "str": "[9.822 client 19332] close(7) = 0"
+                                "str": "[7.046 client 24161] close(7) = 0"
                             }
                         ]
                     }
                 ],
+                "description": "Isolated host with IPv4 and IPv6 loopback.",
                 "listeners": [
                     {
                         "events": [
                             {
-                                "str": "[4.158 server 19331] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 7"
+                                "str": "[2.954 server 24160] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 7"
                             },
                             {
-                                "str": "[4.303 server 19331] bind(7, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                                "str": "[3.324 server 24160] bind(7, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
                             },
                             {
-                                "str": "[4.304 server 19331] listen(7, 128) = 0"
+                                "str": "[3.328 server 24160] listen(7, 128) = 0"
                             }
                         ]
                     },
                     {
                         "events": [
                             {
-                                "str": "[4.304 server 19331] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 9"
+                                "str": "[3.333 server 24160] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 9"
                             },
                             {
-                                "str": "[4.308 server 19331] bind(9, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                                "str": "[3.343 server 24160] bind(9, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
                             },
                             {
-                                "str": "[4.308 server 19331] listen(9, 128) = 0"
+                                "str": "[3.348 server 24160] listen(9, 128) = 0"
                             }
                         ]
                     }
@@ -84,45 +60,47 @@
                         "str": "Unexpected client exit code 1."
                     }
                 ],
+                "name": "dualstack",
                 "connections": [
                     {
                         "events": [
                             {
-                                "str": "[8.792 client 19409] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 7"
+                                "str": "[7.574 client 24234] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 7"
                             },
                             {
-                                "str": "[8.955 client 19409] connect(7, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = 0"
+                                "str": "[7.658 client 24234] connect(7, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = 0"
                             },
                             {
-                                "str": "[9.115 client 19409] close(7) = 0"
+                                "str": "[8.073 client 24234] close(7) = 0"
                             }
                         ]
                     }
                 ],
+                "description": "Hosts connected via IPv4 and IPv6.",
                 "listeners": [
                     {
                         "events": [
                             {
-                                "str": "[3.943 server 19389] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 7"
+                                "str": "[3.955 server 24233] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 7"
                             },
                             {
-                                "str": "[4.433 server 19389] bind(7, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                                "str": "[4.309 server 24233] bind(7, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
                             },
                             {
-                                "str": "[4.437 server 19389] listen(7, 128) = 0"
+                                "str": "[4.309 server 24233] listen(7, 128) = 0"
                             }
                         ]
                     },
                     {
                         "events": [
                             {
-                                "str": "[4.442 server 19389] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 9"
+                                "str": "[4.309 server 24233] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 9"
                             },
                             {
-                                "str": "[4.490 server 19389] bind(9, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                                "str": "[4.344 server 24233] bind(9, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
                             },
                             {
-                                "str": "[4.494 server 19389] listen(9, 128) = 0"
+                                "str": "[4.348 server 24233] listen(9, 128) = 0"
                             }
                         ]
                     }
@@ -134,36 +112,64 @@
                         "str": "Client timeout occured."
                     }
                 ],
+                "name": "v6dropped",
                 "connections": [],
+                "description": "Hosts connected via IPv4 and defunct IPv6 (packets dropped by firewall).",
                 "listeners": [
                     {
                         "events": [
                             {
-                                "str": "[5.366 server 19654] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 7"
+                                "str": "[4.319 server 24491] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 7"
                             },
                             {
-                                "str": "[5.829 server 19654] bind(7, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                                "str": "[4.637 server 24491] bind(7, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
                             },
                             {
-                                "str": "[5.834 server 19654] listen(7, 128) = 0"
+                                "str": "[4.639 server 24491] listen(7, 128) = 0"
                             }
                         ]
                     },
                     {
                         "events": [
                             {
-                                "str": "[5.838 server 19654] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 9"
+                                "str": "[4.644 server 24491] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 9"
                             },
                             {
-                                "str": "[5.888 server 19654] bind(9, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                                "str": "[4.691 server 24491] bind(9, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
                             },
                             {
-                                "str": "[5.893 server 19654] listen(9, 128) = 0"
+                                "str": "[4.696 server 24491] listen(9, 128) = 0"
                             }
                         ]
                     }
                 ]
             }
-        ]
+        ],
+        "properties": {
+            "errors": {
+                "value": 3,
+                "status": "FAIL"
+            },
+            "ip4-listener": {
+                "value": true,
+                "status": "PASS"
+            },
+            "ip6-connection": {
+                "value": false,
+                "status": "FAIL"
+            },
+            "parallel-connect": {
+                "value": false,
+                "status": "INFO"
+            },
+            "ip4-connection": {
+                "value": false,
+                "status": "FAIL"
+            },
+            "ip6-listener": {
+                "value": true,
+                "status": "PASS"
+            }
+        }
     }
 }

@@ -1,32 +1,6 @@
 {
     "dnsmasq-dhcpcd": {
         "status": "FAIL",
-        "properties": {
-            "ip6-listener": {
-                "status": "FAIL",
-                "value": false
-            },
-            "ip6-connection": {
-                "status": "PASS",
-                "value": true
-            },
-            "ip4-listener": {
-                "status": "FAIL",
-                "value": false
-            },
-            "parallel-connect": {
-                "status": "INFO",
-                "value": false
-            },
-            "errors": {
-                "status": "FAIL",
-                "value": 6
-            },
-            "ip4-connection": {
-                "status": "FAIL",
-                "value": false
-            }
-        },
         "scenarios": [
             {
                 "errors": [
@@ -37,21 +11,23 @@
                         "str": "Unexpected client exit code 1."
                     }
                 ],
+                "name": "loopback",
                 "connections": [
                     {
                         "events": [
                             {
-                                "str": "[12.495 client 18181] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
+                                "str": "[9.062 client 23007] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
                             },
                             {
-                                "str": "[12.495 client 18181] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
+                                "str": "[9.063 client 23007] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
                             },
                             {
-                                "str": "[12.495 client 18181] close(7) = 0"
+                                "str": "[9.063 client 23007] close(7) = 0"
                             }
                         ]
                     }
                 ],
+                "description": "Isolated host with IPv4 and IPv6 loopback.",
                 "listeners": []
             },
             {
@@ -63,21 +39,23 @@
                         "str": "Unexpected client exit code 1."
                     }
                 ],
+                "name": "dualstack",
                 "connections": [
                     {
                         "events": [
                             {
-                                "str": "[12.321 client 18246] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
+                                "str": "[9.880 client 23073] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
                             },
                             {
-                                "str": "[12.326 client 18246] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
+                                "str": "[9.884 client 23073] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
                             },
                             {
-                                "str": "[12.335 client 18246] close(7) = 0"
+                                "str": "[9.893 client 23073] close(7) = 0"
                             }
                         ]
                     }
                 ],
+                "description": "Hosts connected via IPv4 and IPv6.",
                 "listeners": []
             },
             {
@@ -89,23 +67,51 @@
                         "str": "Unexpected client exit code 1."
                     }
                 ],
+                "name": "v6dropped",
                 "connections": [
                     {
                         "events": [
                             {
-                                "str": "[13.172 client 18343] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
+                                "str": "[10.662 client 23173] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
                             },
                             {
-                                "str": "[13.172 client 18343] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
+                                "str": "[10.667 client 23173] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
                             },
                             {
-                                "str": "[13.173 client 18343] close(7) = 0"
+                                "str": "[10.676 client 23173] close(7) = 0"
                             }
                         ]
                     }
                 ],
+                "description": "Hosts connected via IPv4 and defunct IPv6 (packets dropped by firewall).",
                 "listeners": []
             }
-        ]
+        ],
+        "properties": {
+            "errors": {
+                "value": 6,
+                "status": "FAIL"
+            },
+            "ip4-listener": {
+                "value": false,
+                "status": "FAIL"
+            },
+            "ip6-connection": {
+                "value": true,
+                "status": "PASS"
+            },
+            "parallel-connect": {
+                "value": false,
+                "status": "INFO"
+            },
+            "ip4-connection": {
+                "value": false,
+                "status": "FAIL"
+            },
+            "ip6-listener": {
+                "value": false,
+                "status": "FAIL"
+            }
+        }
     }
 }
