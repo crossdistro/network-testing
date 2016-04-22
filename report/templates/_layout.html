@@ -54,9 +54,32 @@
             background-color: transparent;
             border: 1px #CCC solid;
         }
+        nav, nav ol {
+            margin-bottom: 0 !important;
+            background-color: #F5F5F5;
+        }
     </style>
   </head>
   <body>
+    {% block navbar %}
+        {% if breadcrumbs %}
+        <nav>
+            <div class="container">
+                <ol class="breadcrumb">
+                    {% for name, url in breadcrumbs %}
+                        {% if url %}
+                            <li>
+                                <a href="{{ url }}">{{ name }}</a>
+                            </li>
+                        {% else %}
+                            <li>{{ name }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </li>
+            </div>
+        </nav>
+        {% endif %}
+    {% endblock navbar %}
     {% block content %}
     {% endblock content %}
   </body>

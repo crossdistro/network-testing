@@ -71,11 +71,15 @@ def build(staticdatadir, outdir, templatedir, input_file):
             file.write(result)
 
     # Render all the pages
-    render('index.html', 'index.html')
+    render('index.html', 'index.html', breadcrumbs=())
 
     for name, testcase in data['results'].items():
         render('cases/{}.html'.format(name), 'testcase.html',
-               testcase_name=name, testcase=testcase)
+               testcase_name=name, testcase=testcase,
+               breadcrumbs=[
+                   ('Network Test Report', '../index.html'),
+                   (name, None),
+               ])
 
     print('Wrote to', os.path.abspath(outdir))
 
