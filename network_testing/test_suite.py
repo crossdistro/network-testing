@@ -269,6 +269,24 @@ class Scenario(object):
         for error in self.errors:
             print('      ' + str(error))
 
+    def event_to_dict(self, event):
+        return {'str': str(event)}
+
+    def err_to_dict(self, error):
+        return {'str': str(error)}
+
+    def sock_to_dict(self, sock):
+        result = {}
+        result['events'] = [self.event_to_dict(event) for event in sock.events]
+        return result
+
+    def to_dict(self):
+        result = {}
+        result['listeners'] = [self.sock_to_dict(listener) for listener in self.listeners]
+        result['connections'] = [self.sock_to_dict(connection) for connection in self.connections]
+        result['errors'] = [self.err_to_dict(error) for error in self.errors]
+        return result
+
 
 class LoopbackScenario(Scenario):
     name = 'loopback'
@@ -386,6 +404,7 @@ class TestCase:
     def to_dict(self):
         result = {'status': result_str[self.result]}
         props = result['properties'] = {prop.name: prop.to_dict() for prop in self.properties.values()}
+        scenarios = result['scenarios'] = [scenario.to_dict() for scenario in self.scenarios]
         return result
 
     def save(self, outdir):
