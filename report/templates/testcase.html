@@ -24,11 +24,20 @@
         </div>
         <div class="col-md-9">
             <h2>Scenarios</h2>
-            <ul class="list-group">
-                {% for scenario in testcase['scenarios'] %}
-                    <li class="list-group-item">
+            {% for scenario in testcase['scenarios'] %}
+                <div class="panel panel-default">
+                    <h3 class="panel-heading">
+                        <strong>{{ scenario['name'] }}</strong>
                         {% if scenario['errors'] %}
-                            <h3>Errors</h3>
+                            <span class="scenario-status scenario-status-errors">✖</span>
+                        {% else %}
+                            <span class="scenario-status scenario-status-success">✔</span>
+                        {% endif %}
+                    </h3>
+                    <div class="panel-body">
+                        <p>{{ scenario['description'] }}</p>
+                        {% if scenario['errors'] %}
+                            <h4>Errors</h4>
                             <ul class="error-list">
                                 {% for error in scenario['errors'] %}
                                     <li>
@@ -38,7 +47,7 @@
                             </ul>
                         {% endif %}
                         {% if scenario['connections'] %}
-                            <h3>Connection Events</h3>
+                            <h4>Connection Events</h4>
                             {% for connection in scenario['connections'] %}
                                 <pre>
                                 {%- for event in connection['events'] -%}
@@ -48,7 +57,7 @@
                             {% endfor %}
                         {% endif %}
                         {% if scenario['listeners'] %}
-                            <h3>Listeners</h3>
+                            <h4>Listeners</h4>
                             {% for listener in scenario['listeners'] %}
                                 <pre>
                                 {%- for event in listener['events'] -%}
@@ -57,9 +66,9 @@
                                 </pre>
                             {% endfor %}
                         {% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
         <div class="col-md-3">
             <h2>Properties</h2>

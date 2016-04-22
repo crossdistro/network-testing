@@ -43,7 +43,7 @@
             padding-left: 0;
         }
         ul.error-list li:before {
-            color: red;
+            color: #D9534F;
             content: '✖';
         }
         .right-label {
@@ -57,6 +57,20 @@
         nav, nav ol {
             margin-bottom: 0 !important;
             background-color: #F5F5F5;
+        }
+        h3.panel-heading {
+            margin: 0;
+            font-size: 120%;
+        }
+        .panel-heading .scenario-status {
+            float: right;
+            display: block;
+        }
+        .panel-heading .scenario-status-success {
+            color: #5CB85C;
+        }
+        .panel-heading .scenario-status-errors {
+            color: #D9534F;
         }
     </style>
   </head>
