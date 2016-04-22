@@ -1,0 +1,111 @@
+{
+    "dnsmasq-dhcpcd": {
+        "status": "FAIL",
+        "properties": {
+            "ip6-listener": {
+                "status": "FAIL",
+                "value": false
+            },
+            "ip6-connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "ip4-listener": {
+                "status": "FAIL",
+                "value": false
+            },
+            "parallel-connect": {
+                "status": "INFO",
+                "value": false
+            },
+            "errors": {
+                "status": "FAIL",
+                "value": 6
+            },
+            "ip4-connection": {
+                "status": "FAIL",
+                "value": false
+            }
+        },
+        "scenarios": [
+            {
+                "errors": [
+                    {
+                        "str": "Server timeout occured."
+                    },
+                    {
+                        "str": "Unexpected client exit code 1."
+                    }
+                ],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[12.495 client 18181] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
+                            },
+                            {
+                                "str": "[12.495 client 18181] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
+                            },
+                            {
+                                "str": "[12.495 client 18181] close(7) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": []
+            },
+            {
+                "errors": [
+                    {
+                        "str": "Server timeout occured."
+                    },
+                    {
+                        "str": "Unexpected client exit code 1."
+                    }
+                ],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[12.321 client 18246] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
+                            },
+                            {
+                                "str": "[12.326 client 18246] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
+                            },
+                            {
+                                "str": "[12.335 client 18246] close(7) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": []
+            },
+            {
+                "errors": [
+                    {
+                        "str": "Server timeout occured."
+                    },
+                    {
+                        "str": "Unexpected client exit code 1."
+                    }
+                ],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[13.172 client 18343] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
+                            },
+                            {
+                                "str": "[13.172 client 18343] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
+                            },
+                            {
+                                "str": "[13.173 client 18343] close(7) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": []
+            }
+        ]
+    }
+}

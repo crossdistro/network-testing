@@ -1,0 +1,155 @@
+{
+    "ssh": {
+        "status": "FAIL",
+        "properties": {
+            "ip6-listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "ip6-connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "ip4-listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "parallel-connect": {
+                "status": "INFO",
+                "value": false
+            },
+            "errors": {
+                "status": "FAIL",
+                "value": 1
+            },
+            "ip4-connection": {
+                "status": "FAIL",
+                "value": false
+            }
+        },
+        "scenarios": [
+            {
+                "errors": [],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[5.540 client 20214] socket(AF_INET6, SOCK_STREAM, 6) = 6"
+                            },
+                            {
+                                "str": "[5.543 client 20214] connect(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0001>, sin6_scope_ip=0>, 28) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[3.765 server 20211] socket(AF_INET6, SOCK_STREAM, 6) = 6"
+                            },
+                            {
+                                "str": "[3.788 server 20211] bind(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[3.793 server 20211] listen(6, 128) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[4.011 server 20211] socket(AF_INET, SOCK_STREAM, 6) = 8"
+                            },
+                            {
+                                "str": "[4.016 server 20211] bind(8, <sockaddr_in sin_family=2, sin_port=22, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[4.018 server 20211] listen(8, 128) = 0"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "errors": [],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[6.051 client 20276] socket(AF_INET6, SOCK_STREAM, 6) = 6"
+                            },
+                            {
+                                "str": "[6.061 client 20276] connect(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[4.745 server 20273] socket(AF_INET6, SOCK_STREAM, 6) = 6"
+                            },
+                            {
+                                "str": "[4.746 server 20273] bind(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[4.747 server 20273] listen(6, 128) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[4.840 server 20273] socket(AF_INET, SOCK_STREAM, 6) = 8"
+                            },
+                            {
+                                "str": "[4.841 server 20273] bind(8, <sockaddr_in sin_family=2, sin_port=22, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[4.841 server 20273] listen(8, 128) = 0"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "errors": [
+                    {
+                        "str": "Client timeout occured."
+                    }
+                ],
+                "connections": [],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[3.987 server 20728] socket(AF_INET6, SOCK_STREAM, 6) = 6"
+                            },
+                            {
+                                "str": "[3.988 server 20728] bind(6, <sockaddr_in6 sin6_family=10, sin6_port=22, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[3.989 server 20728] listen(6, 128) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[4.100 server 20728] socket(AF_INET, SOCK_STREAM, 6) = 8"
+                            },
+                            {
+                                "str": "[4.118 server 20728] bind(8, <sockaddr_in sin_family=2, sin_port=22, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[4.123 server 20728] listen(8, 128) = 0"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

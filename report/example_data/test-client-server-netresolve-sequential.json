@@ -1,0 +1,228 @@
+{
+    "netresolve-sequential": {
+        "status": "PASS",
+        "properties": {
+            "ip6-listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "ip6-connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "ip4-listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "parallel-connect": {
+                "status": "INFO",
+                "value": false
+            },
+            "ip6-preferred-delay": {
+                "status": "PASS",
+                "value": 15.05472707748413
+            },
+            "errors": {
+                "status": "PASS",
+                "value": 0
+            },
+            "connection-cleanup": {
+                "status": "INFO",
+                "value": true
+            },
+            "ip4-connection": {
+                "status": "PASS",
+                "value": true
+            }
+        },
+        "scenarios": [
+            {
+                "errors": [],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[4.912 client 18945] socket(AF_INET6, 2049, 6) = 6"
+                            },
+                            {
+                                "str": "[4.916 client 18945] connect(6, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0001>, sin6_scope_ip=0>, 28) = -115"
+                            },
+                            {
+                                "str": "[4.918 client 18945] getsockopt(6, SOL_SOCKET, 4, 0x00007f819102f690, 0x00007fff0503a794) = 0"
+                            },
+                            {
+                                "str": "[4.920 client 18945] shutdown(6, 2) = 0"
+                            },
+                            {
+                                "str": "[4.920 client 18945] close(6) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[2.408 server 18942] socket(AF_INET6, 2049, 6) = 5"
+                            },
+                            {
+                                "str": "[2.419 server 18942] bind(5, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[2.424 server 18942] listen(5, 128) = 0"
+                            },
+                            {
+                                "str": "[4.920 server 18942] close(5) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[2.429 server 18942] socket(AF_INET, 2049, 6) = 6"
+                            },
+                            {
+                                "str": "[2.438 server 18942] bind(6, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[2.442 server 18942] listen(6, 128) = 0"
+                            },
+                            {
+                                "str": "[4.920 server 18942] close(6) = 0"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "errors": [],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[3.850 client 19006] socket(AF_INET6, 2049, 6) = 6"
+                            },
+                            {
+                                "str": "[3.855 client 19006] connect(6, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = -115"
+                            },
+                            {
+                                "str": "[3.856 client 19006] getsockopt(6, SOL_SOCKET, 4, 0x00007f3e34766690, 0x00007fff99e7b8e4) = 0"
+                            },
+                            {
+                                "str": "[3.866 client 19006] shutdown(6, 2) = 0"
+                            },
+                            {
+                                "str": "[3.867 client 19006] close(6) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[2.148 server 19004] socket(AF_INET6, 2049, 6) = 5"
+                            },
+                            {
+                                "str": "[2.149 server 19004] bind(5, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[2.149 server 19004] listen(5, 128) = 0"
+                            },
+                            {
+                                "str": "[3.857 server 19004] close(5) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[2.149 server 19004] socket(AF_INET, 2049, 6) = 6"
+                            },
+                            {
+                                "str": "[2.150 server 19004] bind(6, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[2.150 server 19004] listen(6, 128) = 0"
+                            },
+                            {
+                                "str": "[3.857 server 19004] close(6) = 0"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "errors": [],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[5.278 client 19097] socket(AF_INET6, 2049, 6) = 6"
+                            },
+                            {
+                                "str": "[5.283 client 19097] connect(6, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = -115"
+                            },
+                            {
+                                "str": "[20.338 client 19097] close(6) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[20.356 client 19097] socket(AF_INET, 2049, 6) = 6"
+                            },
+                            {
+                                "str": "[20.361 client 19097] connect(6, <sockaddr_in sin_family=2, sin_port=80, sin_addr=192.0.2.1>, 16) = -115"
+                            },
+                            {
+                                "str": "[20.373 client 19097] getsockopt(6, SOL_SOCKET, 4, 0x00007f123879a690, 0x00007ffc873e3a04) = 0"
+                            },
+                            {
+                                "str": "[20.426 client 19097] shutdown(6, 2) = 0"
+                            },
+                            {
+                                "str": "[20.426 client 19097] close(6) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[3.616 server 19096] socket(AF_INET6, 2049, 6) = 5"
+                            },
+                            {
+                                "str": "[3.630 server 19096] bind(5, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[3.634 server 19096] listen(5, 128) = 0"
+                            },
+                            {
+                                "str": "[20.361 server 19096] close(5) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[3.639 server 19096] socket(AF_INET, 2049, 6) = 6"
+                            },
+                            {
+                                "str": "[3.648 server 19096] bind(6, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[3.653 server 19096] listen(6, 128) = 0"
+                            },
+                            {
+                                "str": "[20.361 server 19096] close(6) = 0"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,178 @@
+{
+    "python3-asyncio": {
+        "status": "FAIL",
+        "properties": {
+            "ip6-listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "ip6-connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "ip4-listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "parallel-connect": {
+                "status": "INFO",
+                "value": false
+            },
+            "errors": {
+                "status": "FAIL",
+                "value": 1
+            },
+            "ip4-connection": {
+                "status": "FAIL",
+                "value": false
+            }
+        },
+        "scenarios": [
+            {
+                "errors": [],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[12.360 client 19769] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 11"
+                            },
+                            {
+                                "str": "[12.381 client 19769] connect(11, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0001>, sin6_scope_ip=0>, 28) = -115"
+                            },
+                            {
+                                "str": "[12.382 client 19769] getsockopt(11, SOL_SOCKET, 4, 0x00007ffc94b8bef4, 0x00007ffc94b8bef8) = 0"
+                            },
+                            {
+                                "str": "[12.603 client 19769] close(11) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[6.558 server 19767] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 11"
+                            },
+                            {
+                                "str": "[6.686 server 19767] bind(11, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[6.711 server 19767] listen(11, 100) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[6.691 server 19767] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 13"
+                            },
+                            {
+                                "str": "[6.709 server 19767] bind(13, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[6.718 server 19767] listen(13, 100) = 0"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "errors": [],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[13.843 client 19838] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 11"
+                            },
+                            {
+                                "str": "[13.875 client 19838] connect(11, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = -115"
+                            },
+                            {
+                                "str": "[13.876 client 19838] getsockopt(11, SOL_SOCKET, 4, 0x00007ffdfb2f1f94, 0x00007ffdfb2f1f98) = 0"
+                            },
+                            {
+                                "str": "[14.194 client 19838] close(11) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[8.176 server 19835] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 11"
+                            },
+                            {
+                                "str": "[8.399 server 19835] bind(11, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[8.418 server 19835] listen(11, 100) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[8.403 server 19835] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 13"
+                            },
+                            {
+                                "str": "[8.416 server 19835] bind(13, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[8.421 server 19835] listen(13, 100) = 0"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "errors": [
+                    {
+                        "str": "Client timeout occured."
+                    }
+                ],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[14.693 client 20098] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 11"
+                            },
+                            {
+                                "str": "[14.788 client 20098] connect(11, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = -115"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[9.174 server 20096] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 11"
+                            },
+                            {
+                                "str": "[9.369 server 20096] bind(11, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[9.433 server 20096] listen(11, 100) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[9.374 server 20096] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 13"
+                            },
+                            {
+                                "str": "[9.428 server 20096] bind(13, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[9.446 server 20096] listen(13, 100) = 0"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

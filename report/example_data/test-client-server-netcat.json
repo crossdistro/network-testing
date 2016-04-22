@@ -1,0 +1,190 @@
+{
+    "netcat": {
+        "status": "FAIL",
+        "properties": {
+            "ip6-listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "ip6-connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "ip4-listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "parallel-connect": {
+                "status": "INFO",
+                "value": false
+            },
+            "errors": {
+                "status": "FAIL",
+                "value": 1
+            },
+            "ip4-connection": {
+                "status": "FAIL",
+                "value": false
+            }
+        },
+        "scenarios": [
+            {
+                "errors": [],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[3.095 client 18388] socket(AF_INET6, SOCK_STREAM, 6) = 5"
+                            },
+                            {
+                                "str": "[3.296 client 18388] connect(5, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0001>, sin6_scope_ip=0>, 28) = -115"
+                            },
+                            {
+                                "str": "[3.298 client 18388] getsockopt(5, SOL_SOCKET, 4, 0x00007ffd6ff3f84c, 0x00007ffd6ff3f848) = 0"
+                            },
+                            {
+                                "str": "[4.679 client 18388] close(5) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[1.836 server 18385] socket(AF_INET6, SOCK_STREAM, 6) = 5"
+                            },
+                            {
+                                "str": "[1.939 server 18385] bind(5, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[1.939 server 18385] listen(5, 128) = 0"
+                            },
+                            {
+                                "str": "[4.682 server 18385] close(5) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[1.955 server 18385] socket(AF_INET, SOCK_STREAM, 6) = 7"
+                            },
+                            {
+                                "str": "[2.047 server 18385] bind(7, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[2.047 server 18385] listen(7, 128) = 0"
+                            },
+                            {
+                                "str": "[4.683 server 18385] close(7) = 0"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "errors": [],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[4.930 client 18450] socket(AF_INET6, SOCK_STREAM, 6) = 5"
+                            },
+                            {
+                                "str": "[5.256 client 18450] connect(5, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = -115"
+                            },
+                            {
+                                "str": "[5.256 client 18450] getsockopt(5, SOL_SOCKET, 4, 0x00007ffcf4d09d4c, 0x00007ffcf4d09d48) = 0"
+                            },
+                            {
+                                "str": "[6.284 client 18450] close(5) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[3.050 server 18447] socket(AF_INET6, SOCK_STREAM, 6) = 5"
+                            },
+                            {
+                                "str": "[3.143 server 18447] bind(5, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[3.143 server 18447] listen(5, 128) = 0"
+                            },
+                            {
+                                "str": "[6.290 server 18447] close(5) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[3.154 server 18447] socket(AF_INET, SOCK_STREAM, 6) = 7"
+                            },
+                            {
+                                "str": "[3.246 server 18447] bind(7, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[3.246 server 18447] listen(7, 128) = 0"
+                            },
+                            {
+                                "str": "[6.290 server 18447] close(7) = 0"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "errors": [
+                    {
+                        "str": "Client timeout occured."
+                    }
+                ],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[5.972 client 18663] socket(AF_INET6, SOCK_STREAM, 6) = 5"
+                            },
+                            {
+                                "str": "[6.566 client 18663] connect(5, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = -115"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[3.324 server 18660] socket(AF_INET6, SOCK_STREAM, 6) = 5"
+                            },
+                            {
+                                "str": "[3.550 server 18660] bind(5, <sockaddr_in6 sin6_family=10, sin6_port=80, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0000>, sin6_scope_ip=0>, 28) = 0"
+                            },
+                            {
+                                "str": "[3.554 server 18660] listen(5, 128) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[3.629 server 18660] socket(AF_INET, SOCK_STREAM, 6) = 7"
+                            },
+                            {
+                                "str": "[3.847 server 18660] bind(7, <sockaddr_in sin_family=2, sin_port=80, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[3.852 server 18660] listen(7, 128) = 0"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

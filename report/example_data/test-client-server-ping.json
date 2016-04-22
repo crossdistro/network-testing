@@ -1,0 +1,102 @@
+{
+    "ping": {
+        "status": "FAIL",
+        "properties": {
+            "ip6-listener": {
+                "status": "FAIL",
+                "value": false
+            },
+            "ip6-connection": {
+                "status": "PASS",
+                "value": true
+            },
+            "ip4-listener": {
+                "status": "FAIL",
+                "value": false
+            },
+            "parallel-connect": {
+                "status": "INFO",
+                "value": false
+            },
+            "errors": {
+                "status": "FAIL",
+                "value": 3
+            },
+            "ip4-connection": {
+                "status": "FAIL",
+                "value": false
+            }
+        },
+        "scenarios": [
+            {
+                "errors": [
+                    {
+                        "str": "Unexpected server exit code 127."
+                    }
+                ],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[3.536 client 19140] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
+                            },
+                            {
+                                "str": "[3.540 client 19140] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
+                            },
+                            {
+                                "str": "[3.543 client 19140] close(7) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": []
+            },
+            {
+                "errors": [
+                    {
+                        "str": "Unexpected server exit code 127."
+                    }
+                ],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[4.375 client 19199] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
+                            },
+                            {
+                                "str": "[4.380 client 19199] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
+                            },
+                            {
+                                "str": "[4.389 client 19199] close(7) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": []
+            },
+            {
+                "errors": [
+                    {
+                        "str": "Unexpected server exit code 127."
+                    }
+                ],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[3.472 client 19290] socket(AF_INET6, SOCK_DGRAM, 0) = 7"
+                            },
+                            {
+                                "str": "[3.472 client 19290] connect(7, <sockaddr family=AF_UNSPEC>, 28) = 0"
+                            },
+                            {
+                                "str": "[3.473 client 19290] close(7) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": []
+            }
+        ]
+    }
+}

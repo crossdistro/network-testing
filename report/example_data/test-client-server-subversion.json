@@ -1,0 +1,165 @@
+{
+    "subversion": {
+        "status": "FAIL",
+        "properties": {
+            "ip6-listener": {
+                "status": "FAIL",
+                "value": false
+            },
+            "ip6-connection": {
+                "status": "FAIL",
+                "value": false
+            },
+            "ip4-listener": {
+                "status": "PASS",
+                "value": true
+            },
+            "parallel-connect": {
+                "status": "INFO",
+                "value": true
+            },
+            "errors": {
+                "status": "FAIL",
+                "value": 6
+            },
+            "ip4-connection": {
+                "status": "FAIL",
+                "value": false
+            }
+        },
+        "scenarios": [
+            {
+                "errors": [
+                    {
+                        "str": "Server timeout occured."
+                    }
+                ],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[11.939 client 20803] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 5"
+                            },
+                            {
+                                "str": "[11.943 client 20803] connect(5, <sockaddr_in6 sin6_family=10, sin6_port=3690, sin6_flowinfo=0, sin6_addr=<in6_addr 0000:0000:0000:0000:0000:0000:0000:0001>, sin6_scope_ip=0>, 28) = -111"
+                            },
+                            {
+                                "str": "[11.948 client 20803] close(5) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[11.952 client 20803] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 5"
+                            },
+                            {
+                                "str": "[11.957 client 20803] connect(5, <sockaddr_in sin_family=2, sin_port=3690, sin_addr=127.0.0.1>, 16) = 0"
+                            },
+                            {
+                                "str": "[12.416 client 20803] close(5) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[4.034 server 20795] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 5"
+                            },
+                            {
+                                "str": "[4.035 server 20795] bind(5, <sockaddr_in sin_family=2, sin_port=3690, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[4.035 server 20795] listen(5, 7) = 0"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "errors": [
+                    {
+                        "str": "Server timeout occured."
+                    },
+                    {
+                        "str": "Unexpected server exit code 1."
+                    }
+                ],
+                "connections": [
+                    {
+                        "events": [
+                            {
+                                "str": "[12.973 client 20878] socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC, 6) = 5"
+                            },
+                            {
+                                "str": "[12.975 client 20878] connect(5, <sockaddr_in6 sin6_family=10, sin6_port=3690, sin6_flowinfo=0, sin6_addr=<in6_addr 2001:0db8:0000:0000:0000:0000:0002:0001>, sin6_scope_ip=0>, 28) = -111"
+                            },
+                            {
+                                "str": "[12.976 client 20878] close(5) = 0"
+                            }
+                        ]
+                    },
+                    {
+                        "events": [
+                            {
+                                "str": "[12.976 client 20878] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 5"
+                            },
+                            {
+                                "str": "[12.978 client 20878] connect(5, <sockaddr_in sin_family=2, sin_port=3690, sin_addr=192.0.2.1>, 16) = 0"
+                            },
+                            {
+                                "str": "[13.572 client 20878] close(5) = 0"
+                            }
+                        ]
+                    }
+                ],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[5.021 server 20870] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 5"
+                            },
+                            {
+                                "str": "[5.021 server 20870] bind(5, <sockaddr_in sin_family=2, sin_port=3690, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[5.021 server 20870] listen(5, 7) = 0"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "errors": [
+                    {
+                        "str": "Server timeout occured."
+                    },
+                    {
+                        "str": "Client timeout occured."
+                    },
+                    {
+                        "str": "Unexpected server exit code 1."
+                    }
+                ],
+                "connections": [],
+                "listeners": [
+                    {
+                        "events": [
+                            {
+                                "str": "[5.530 server 20976] socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 6) = 5"
+                            },
+                            {
+                                "str": "[5.539 server 20976] bind(5, <sockaddr_in sin_family=2, sin_port=3690, sin_addr=0.0.0.0>, 16) = 0"
+                            },
+                            {
+                                "str": "[5.544 server 20976] listen(5, 7) = 0"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
