@@ -124,6 +124,7 @@ class Errors(Property):
 
 class Scenario(object):
     client = server = None
+    descriptoin = ''
 
     def __init__(self, testcase):
         self.expected_exitcodes = {'server': 0, 'client': 0}
@@ -281,7 +282,7 @@ class Scenario(object):
         return result
 
     def to_dict(self):
-        result = {}
+        result = {'name': self.name, 'description': self.description}
         result['listeners'] = [self.sock_to_dict(listener) for listener in self.listeners]
         result['connections'] = [self.sock_to_dict(connection) for connection in self.connections]
         result['errors'] = [self.err_to_dict(error) for error in self.errors]
@@ -290,6 +291,7 @@ class Scenario(object):
 
 class LoopbackScenario(Scenario):
     name = 'loopback'
+    description = "Isolated host with IPv4 and IPv6 loopback."
 
     def prepare(self):
         super(self.__class__, self).prepare()
@@ -302,6 +304,7 @@ class LoopbackScenario(Scenario):
 
 class DualstackScenario(Scenario):
     name = 'dualstack'
+    description = "Hosts connected via IPv4 and IPv6."
 
     source_ns = 'test-client'
     destination_ns = 'test-server'
@@ -335,6 +338,7 @@ class DualstackScenario(Scenario):
 
 class IP6DroppedScenario(DualstackScenario):
     name = 'v6dropped'
+    description = "Hosts connected via IPv4 and defunct IPv6 (packets dropped by firewall)."
 
     def prepare(self):
         super(IP6DroppedScenario, self).prepare()
