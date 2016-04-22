@@ -76,16 +76,21 @@ def main():
             help='Directory for output (will be overwritten)')
     parser.add_argument('-t', '--templatedir', action='store', default=os.path.join(data_path, 'report/templates/'),
             help='Directory containing HTML templates')
+    parser.add_argument('--example-data', action='store_true',
+            help='Use example data by default.')
     parser.add_argument('input_file', nargs='*', help='Files what will be used as input')
     args = parser.parse_args()
 
-    path = "./json-output/test-client-server-*.json"
-    files = glob.glob(path)
-    if not files:
-        print("File not found: {}".format(path), file=sys.stderr)
+    if args.input_file:
+        files = args.input_file
+    else:
+        if args.example_data:
+            path = os.path.join(data_path, "report/example_data/*")
+        else:
+            path = "./json-output/test-client-server-*.json"
+        files = glob.glob(path)
+        if not files:
+            print("File not found: {}".format(path), file=sys.stderr)
+            exit(1)
 
-    input_file = args.input_file + files
-    if len(input_file) < 1:
-        print("No input JSON files to parse nothing in {} and also nothing from CMD line".format(path), file=sys.stderr)
-        sys.exit(1)
-    build(args.staticdatadir, args.output, args.templatedir, input_file)
+    build(args.staticdatadir, args.output, args.templatedir, files)

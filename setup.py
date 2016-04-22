@@ -23,6 +23,7 @@ setup(
             'data/testcases/*/*/*',
             'data/report/templates/*',
             'data/report/static_data/*'
+            'data/report/example_data/*'
         ]
     },
 )
