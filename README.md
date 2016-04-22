@@ -16,13 +16,16 @@ Dependencies:
  * python-ptrace 0.8.1
  * netresolve-compat from git master
  * iproute2 with netns support
+ * python-json
+ * python-jinja2 (for HTML reports)
 
 You can use the project directly from git. Just clone the repository and
-run the tests.
+run the tests and generate html reports.
 
     git clone https://github.com/pavlix/network-testing.git
     cd network-testing
-    make run
+    sudo ./test-client-server
+    ./test-client-server-genhtml
 
 Python distutils are supported so that you can easily package the project
 for any distribution.
@@ -37,17 +40,19 @@ enable the COPR repository and install the test suite.
 
 Then install packages required for your desired test and run the test. You
 can ask the test driver for the names of the packages required for your
-desired test.
+desired test and generate html.
 
     dnf install `test-client-server --deps ssh`
     test-client-server ssh
+    test-client-server-genhtml
 
 Alternatively, you may want to install available packages for all tests. In
 case your version of Fedora doesn't provide some of the packages, those
-tests would fail.
+tests would fail. Then you can run all tests and generate html.
 
     for pkg in `test-client-server --deps`; do dnf -y install $pkg; done
     test-client-server
+    test-client-server-genhtml
 
 ## Client and server software tests
 
