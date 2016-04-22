@@ -1,19 +1,5 @@
 {% extends "_layout.html" %}
 
-{% macro result_value(type, value) -%}
-    {%- if type == 'bool' -%}
-        {%- if value -%}
-            Y
-        {%- else -%}
-            N
-        {%- endif -%}
-    {%- elif type == 'float' -%}
-        {{ "{:.2f}".format(value) }}
-    {%- else -%}
-        {{ value }}
-    {% endif -%}
-{%- endmacro -%}
-
 {% block title %}Network Test Report{% endblock %}
 
 {% block content %}
@@ -30,8 +16,10 @@
                 {% for name, pkg in data.results.items() | sort %}
                     <tr>
                         <td>
-                            <span style="background-color: #{{ data.result_colors[pkg.status] }};">&nbsp;</span>
-                            {{ name }}
+                            {{ status_mark(pkg.status) }}
+                            <a href="cases/{{ name }}.html">
+                                {{ name }}
+                            </a>
                         </td>
                         {% for feature in data.schema %}
                             {% set result = pkg.properties.get(feature.name) %}

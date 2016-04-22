@@ -1,0 +1,91 @@
+{% extends "_layout.html" %}
+
+{% macro result_value(type, value) -%}
+    {%- if type == 'bool' -%}
+        {%- if value -%}
+            Y
+        {%- else -%}
+            N
+        {%- endif -%}
+    {%- elif type == 'float' -%}
+        {{ "{:.2f}".format(value) }}
+    {%- else -%}
+        {{ value }}
+    {% endif -%}
+{%- endmacro -%}
+
+{% block title %}{{ testcase_name }} – Network Test Report{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="col-md-12">
+            <h1>{{ testcase_name }} <small>test case</small></h1>
+            {{ status_mark(testcase['status']) }} Status: {{ testcase['status'] }}
+        </div>
+        <div class="col-md-9">
+            <h2>Scenarios</h2>
+            <ul class="list-group">
+                {% for scenario in testcase['scenarios'] %}
+                    <li class="list-group-item">
+                        {% if scenario['errors'] %}
+                            <h3>Errors</h3>
+                            <ul class="error-list">
+                                {% for error in scenario['errors'] %}
+                                    <li>
+                                        {{ error.str }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        {% if scenario['connections'] %}
+                            <h3>Connection Events</h3>
+                            {% for connection in scenario['connections'] %}
+                                <pre>
+                                {%- for event in connection['events'] -%}
+                                    {{ event.str }}<br>
+                                {%- endfor -%}
+                                </pre>
+                            {% endfor %}
+                        {% endif %}
+                        {% if scenario['listeners'] %}
+                            <h3>Listeners</h3>
+                            {% for listener in scenario['listeners'] %}
+                                <pre>
+                                {%- for event in listener['events'] -%}
+                                    {{ event['str'] }}<br>
+                                {%- endfor -%}
+                                </pre>
+                            {% endfor %}
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-3">
+            <h2>Properties</h2>
+            <ul class="list-group">
+                {% for feature in data.schema %}
+                    {% set result = testcase.properties.get(feature.name) %}
+                    <li class="list-group-item">
+                    <strong>{{ feature['name'] }}</strong>
+                    {% if result %}
+                        <big><span class="label label-default right-label"
+                            style="background-color: #{{ data.result_colors[result.status] }};">
+                        {{ result_value(feature.type, result.value) }}
+                        </span></big>&nbsp;
+                        {% if feature.values: %}
+                            <div>
+                                {{ feature.values[result.value]['description'] }}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <big><span class="label right-label label-na">
+                            N/A
+                        </span></big>&nbsp;
+                    {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+{% endblock content %}
