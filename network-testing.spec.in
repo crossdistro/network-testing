@@ -3,12 +3,14 @@
 
 Name: network-testing
 Version: 0.0.1
-Release: 0.23%{?snapshot_suffix}%{?dist}
+Release: 0.24%{?snapshot_suffix}%{?dist}
 Summary: Network application testing project
 License: BSD
 URL: https://sourceware.org/%{name}/
 Source0: %{name}-0.0.1.tar.gz
 BuildRequires: python2-devel
+# EPEL7 seems to need explicit python-setuptools requirement.
+BuildRequires: python-setuptools
 Requires: python-ptrace >= 0.8.1
 Requires: netresolve-compat
 Requires: iproute
