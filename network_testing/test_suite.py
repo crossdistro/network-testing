@@ -413,7 +413,8 @@ class TestCase:
 
     def save(self, outdir):
         with open(os.path.join(outdir, "test-client-server-{}.json".format(self.name)), 'w') as stream:
-            json.dump({self.name: self.to_dict()}, stream, indent=4, separators=(',', ': '))
+            json.dump({self.name: self.to_dict()}, stream,
+                      indent=4, separators=(',', ': '), sort_keys=True)
             print(file=stream)
 
 
