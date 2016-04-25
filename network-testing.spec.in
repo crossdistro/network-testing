@@ -12,6 +12,8 @@ BuildRequires: python2-devel
 Requires: python-ptrace >= 0.8.1
 Requires: netresolve-compat
 Requires: iproute
+# for html output
+Requires: python-jinja2
 %description
 Network application testing project provides a test driver written in Python
 and a set of application tests. Tests are run in different network scenarios
