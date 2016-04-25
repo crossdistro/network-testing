@@ -24,7 +24,7 @@ copr: srpm
 
 dist:
 	python setup.py sdist
-	cp dist/*.tar.gz .
+	ln -sf dist/*.tar.gz .
 
 spec: network-testing.spec
 
