@@ -1,3 +1,21 @@
+{% macro result_value(type, value) -%}
+    {%- if type == 'bool' -%}
+        {%- if value -%}
+            Y
+        {%- else -%}
+            N
+        {%- endif -%}
+    {%- elif type == 'float' -%}
+        {{ "{:.2f}".format(value) }}
+    {%- else -%}
+        {{ value }}
+    {% endif -%}
+{%- endmacro -%}
+
+{%- macro status_mark(status) -%}
+    <span style="background-color: #{{ data.result_colors[status] }};">&nbsp;</span>
+{%- endmacro -%}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -20,9 +38,62 @@
         dd {
             margin-left: 1em;
         }
+        ul.error-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        ul.error-list li:before {
+            color: #D9534F;
+            content: '✖';
+        }
+        .right-label {
+            float: right;
+        }
+        .label-na {
+            color: #CCC;
+            background-color: transparent;
+            border: 1px #CCC solid;
+        }
+        nav, nav ol {
+            margin-bottom: 0 !important;
+            background-color: #F5F5F5;
+        }
+        h3.panel-heading {
+            margin: 0;
+            font-size: 120%;
+        }
+        .panel-heading .scenario-status {
+            float: right;
+            display: block;
+        }
+        .panel-heading .scenario-status-success {
+            color: #5CB85C;
+        }
+        .panel-heading .scenario-status-errors {
+            color: #D9534F;
+        }
     </style>
   </head>
   <body>
+    {% block navbar %}
+        {% if breadcrumbs %}
+        <nav>
+            <div class="container">
+                <ol class="breadcrumb">
+                    {% for name, url in breadcrumbs %}
+                        {% if url %}
+                            <li>
+                                <a href="{{ url }}">{{ name }}</a>
+                            </li>
+                        {% else %}
+                            <li>{{ name }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </li>
+            </div>
+        </nav>
+        {% endif %}
+    {% endblock navbar %}
     {% block content %}
     {% endblock content %}
   </body>

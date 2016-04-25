@@ -60,11 +60,26 @@ def build(staticdatadir, outdir, templatedir, input_file):
     def render(out_name, template_name, **env):
         template = template_env.get_template(template_name)
         result = template.render(data=data, **env)
-        with open(os.path.join(outdir, out_name), 'w') as file:
+        output_filename = os.path.join(outdir, out_name)
+        dirname = os.path.dirname(output_filename)
+        try:
+            os.makedirs(dirname)
+        except OSError:
+            pass
+        print('Writing:', output_filename)
+        with open(output_filename, 'w') as file:
             file.write(result)
 
     # Render all the pages
-    render('index.html', 'index.html')
+    render('index.html', 'index.html', breadcrumbs=())
+
+    for name, testcase in data['results'].items():
+        render('cases/{}.html'.format(name), 'testcase.html',
+               testcase_name=name, testcase=testcase,
+               breadcrumbs=[
+                   ('Network Test Report', '../index.html'),
+                   (name, None),
+               ])
 
     print('Wrote to', os.path.abspath(outdir))
 
