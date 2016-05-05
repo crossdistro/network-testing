@@ -2,5 +2,4 @@
 
 from network_testing.client_server_genhtml import main
 
-if __name__ == '__main__':
-    main()
+main()
