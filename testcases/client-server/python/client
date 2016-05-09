@@ -16,7 +16,7 @@ for ai in socket.getaddrinfo(nodename, servname, family, socktype, protocol):
     try:
         sock = socket.socket(family, socktype, protocol)
         sock.connect(sa)
-        sock.send("TEST")
+        sock.send(b"TEST")
         print(sock.recv(4096))
         sock.shutdown(socket.SHUT_RDWR)
         sock.close()
