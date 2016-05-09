@@ -224,7 +224,7 @@ class Scenario(object):
         try:
             return debugger.new_child(origin, command)
         except ptrace.debugger.child.ChildError:
-            self.error("Script '{}' not found.".format(name))
+            self.error("Script '{}' not found.".format(origin))
             return debugger.new_child(origin, ['/bin/true'])
 
     def prepare(self):
