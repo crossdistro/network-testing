@@ -8,8 +8,6 @@ import socket
 import logging
 log = logging.getLogger()
 
-from . import patch
-
 SOCKET_OPERATIONS = set(['bind', 'listen', 'accept', 'connect', 'getsockopt', 'shutdown', 'close'])
 PROCESS_SYSCALLS = set(['close', 'execve', 'fork', 'clone'])
 TRACED_SYSCALLS = ptrace.syscall.SOCKET_SYSCALL_NAMES | PROCESS_SYSCALLS

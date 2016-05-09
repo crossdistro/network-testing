@@ -219,6 +219,8 @@ class Scenario(object):
         self.postprocess()
 
     def start(self, debugger, origin):
+        import ptrace.debugger
+
         command = self.command(self.testcase.name, origin)
 
         try:
