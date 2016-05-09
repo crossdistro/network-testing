@@ -4,7 +4,7 @@ FEDORA_VERSION="f25"
 all:
 
 run:
-	rm -rf json-output
+	sudo rm -rf json-output
 	mkdir json-output
 	-sudo ./test-client-server --outdir json-output
 
