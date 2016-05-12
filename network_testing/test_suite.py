@@ -223,9 +223,9 @@ class Scenario(object):
 
         command = self.command(self.testcase.name, origin)
 
-        try:
+        if os.path.exists(command[-1]):
             return debugger.new_child(origin, command)
-        except ptrace.debugger.child.ChildError:
+        else:
             self.error("Script '{}' not found.".format(origin))
             return debugger.new_child(origin, ['/bin/true'])
 
