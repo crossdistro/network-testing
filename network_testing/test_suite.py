@@ -32,7 +32,7 @@ class Property(object):
         self.value = value
 
     def __str__(self):
-        return "{.name}".format(self)
+        return "{0.name} = {0.value}".format(self)
 
     def __repr__(self):
         return repr(str(self))
