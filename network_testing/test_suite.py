@@ -73,17 +73,19 @@ class IP6Connection(Property):
 
 
 @register_property
-class V6PreferredDelay(Property):
-    name = 'ip6-preferred-delay'
-    description = "Delay that ensures IPv6 preference"
-    short = "D6"
+class V6RejectedDelay(Property):
+    name = 'ip6-rejected-delay'
+    description = "Delay caused by rejected IPv6 packet."
+    short = "D6R"
     type = "float"
 
-    def __str__(self):
-        if self.value is None:
-            return "IPv6 isn't preferred or fallback to IPv4 doesn't work."
-        else:
-            return "IPv6 is preferred and fallback to IPv4 takes {value:.3f} seconds.".format(**vars(self))
+
+@register_property
+class V6DroppedDelay(Property):
+    name = 'ip6-dropped-delay'
+    description = "Delay caused by dropped IPv6 packet."
+    short = "D6D"
+    type = "float"
 
 
 @register_property
@@ -340,30 +342,51 @@ class DualstackScenario(Scenario):
             IP6Listener(bool([listener for listener in self.listeners if listener.domain.value == socket.AF_INET6])))
         self.testcase.add_property(ParallelConnect(len(self.connections) > 1))
 
-
-class IP6DroppedScenario(DualstackScenario):
-    name = 'v6dropped'
-    description = "Hosts connected via IPv4 and defunct IPv6 (packets dropped by firewall)."
-
-    def prepare(self):
-        super(IP6DroppedScenario, self).prepare()
-        subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'DROP'])
-
     @staticmethod
     def _check_preferred(preferred, fallback):
         # Preferred was attempted too late after fallback.
+        #
+        # Sequential connect should always result in trying fallback after
+        # preferred. Parallel connect works simultaneously, so we need to
+        # give preferred a bit of time.
+        #
         if preferred.attempted > fallback.attempted + 0.1:
             return None
         # Preferred wasn't closed.
+        #
+        # Failed preferred connection should be closed. Otherwise we have
+        # no way to see that the program acknowledged its failure. Also
+        # the rest of the algorithm depends on the closing time.
         if not preferred.closed:
             return None
         # Preferred was closed too early after attempted.
-        if preferred.closed < preferred.attempted + 0.05:
-            return None
+        #
+        # When packets were dropped and preferred was closed too quickly,
+        # it means that the program didn't provide enough time for preferred
+        # to succeed.
+        #if dropped and preferred.closed < preferred.attempted + 0.05:
+        #    return None
         # Preferred was closed after fallback.
+        #
+        # When fallback has been actually used, it must not be closed before
+        # preferred.
         if fallback.closed and preferred.closed > fallback.closed:
             return None
         return preferred.closed - preferred.attempted
+
+
+class IP6RejectedScenario(DualstackScenario):
+    name = 'v6rejected'
+    description = "Hosts connected via IPv4 and rejected IPv6 (e.g. by firewall)."
+
+    def prepare(self):
+        super(IP6RejectedScenario, self).prepare()
+        # We cannot REJECT all IPv6 traffic due to a possible kernel bug:
+        #
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1336496
+        #
+        #subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'REJECT'])
+        subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'REJECT'])
 
     def postprocess(self):
         v4 = [conn for conn in self.connections if conn.domain.value == socket.AF_INET]
@@ -374,12 +397,31 @@ class IP6DroppedScenario(DualstackScenario):
 
         if len(v4) == 1 and len(v6) == 1:
             v6preferred = self._check_preferred(v6[0], v4[0])
-            self.testcase.add_property(V6PreferredDelay(v6preferred))
+            self.testcase.add_property(V6RejectedDelay(v6preferred))
             self.testcase.add_property(ConnectionCleanup(bool(v6preferred and v4[0].shutdown and v4[0].closed)))
 
 
+class IP6DroppedScenario(DualstackScenario):
+    name = 'v6dropped'
+    description = "Hosts connected via IPv4 and defunct IPv6 (packets dropped by firewall)."
+
+    def prepare(self):
+        super(IP6DroppedScenario, self).prepare()
+        subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'DROP'])
+
+    def postprocess(self):
+        v4 = [conn for conn in self.connections if conn.domain.value == socket.AF_INET]
+        v6 = [conn for conn in self.connections if conn.domain.value == socket.AF_INET6]
+        v6preferred = None
+
+        if len(v4) == 1 and len(v6) == 1:
+            v6preferred = self._check_preferred(v6[0], v4[0])
+
+        self.testcase.add_property(V6DroppedDelay(v6preferred))
+
+
 class TestCase:
-    scenario_classes = [LoopbackScenario, DualstackScenario, IP6DroppedScenario]
+    scenario_classes = [LoopbackScenario, DualstackScenario, IP6RejectedScenario, IP6DroppedScenario]
 
     def __init__(self, name, scenarios=None):
         self.name = name
