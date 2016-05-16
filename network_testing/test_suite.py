@@ -187,11 +187,14 @@ class Scenario(object):
             elif event.name == 'listen':
                 if event.origin != 'server':
                     continue
+                logger.info("Server starts listening on family {} socktype {}.".format(event.socket.domain, event.socket.socktype))
                 self.listeners.append(event.socket)
             elif event.name == 'connect':
                 if event.origin != 'client':
                     continue
                 if event.socket.domain.value not in (socket.AF_INET, socket.AF_INET6):
+                    continue
+                if event.socket.socktype.value not in [listener.socktype.value for listener in self.listeners]:
                     continue
                 if re.search(" sin6?_port=0, ", event.arguments[1].text):
                     continue
