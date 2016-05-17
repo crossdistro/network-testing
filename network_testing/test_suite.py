@@ -365,7 +365,13 @@ class IP6RejectedScenario(DualstackScenario):
 
     def prepare(self):
         super(IP6RejectedScenario, self).prepare()
-        subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'REJECT'])
+        # We cannot REJECT all IPv6 traffic due to a possible kernel bug:
+        #
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1336496
+        #
+        #subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'REJECT'])
+        subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-p', 'tcp', '-j', 'REJECT'])
+        subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-p', 'udp', '-j', 'REJECT'])
 
     def postprocess(self):
         v4 = [conn for conn in self.connections if conn.domain.value == socket.AF_INET]
