@@ -412,10 +412,12 @@ class IP6DroppedScenario(DualstackScenario):
     def postprocess(self):
         v4 = [conn for conn in self.connections if conn.domain.value == socket.AF_INET]
         v6 = [conn for conn in self.connections if conn.domain.value == socket.AF_INET6]
+        v6preferred = None
 
         if len(v4) == 1 and len(v6) == 1:
             v6preferred = self._check_preferred(v6[0], v4[0])
-            self.testcase.add_property(V6DroppedDelay(v6preferred))
+
+        self.testcase.add_property(V6DroppedDelay(v6preferred))
 
 
 class TestCase:
