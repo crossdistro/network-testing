@@ -386,8 +386,7 @@ class IP6RejectedScenario(DualstackScenario):
         # https://bugzilla.redhat.com/show_bug.cgi?id=1336496
         #
         #subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'REJECT'])
-        subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-p', 'tcp', '-j', 'REJECT'])
-        subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-p', 'udp', '-j', 'REJECT'])
+        subprocess.check_call(['ip', 'netns', 'exec', 'test-client', 'ip6tables', '-A', 'OUTPUT', '-j', 'REJECT'])
 
     def postprocess(self):
         v4 = [conn for conn in self.connections if conn.domain.value == socket.AF_INET]
