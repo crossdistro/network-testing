@@ -8,7 +8,7 @@
             N
         {%- endif -%}
     {%- elif type == 'float' -%}
-        {{ "{:.2f}".format(value) }}
+        {{ "{:.2f}".format(value) if value else "–"}}
     {%- else -%}
         {{ value }}
     {% endif -%}
