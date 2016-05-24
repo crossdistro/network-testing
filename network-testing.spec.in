@@ -3,7 +3,7 @@
 
 Name: network-testing
 Version: 0.0.1
-Release: 0.24%{?snapshot_suffix}%{?dist}
+Release: 0.26%{?snapshot_suffix}%{?dist}
 Summary: Network application testing project
 License: BSD
 URL: https://sourceware.org/%{name}/
