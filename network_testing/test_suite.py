@@ -345,15 +345,31 @@ class DualstackScenario(Scenario):
     @staticmethod
     def _check_preferred(preferred, fallback):
         # Preferred was attempted too late after fallback.
+        #
+        # Sequential connect should always result in trying fallback after
+        # preferred. Parallel connect works simultaneously, so we need to
+        # give preferred a bit of time.
+        #
         if preferred.attempted > fallback.attempted + 0.1:
             return None
         # Preferred wasn't closed.
+        #
+        # Failed preferred connection should be closed. Otherwise we have
+        # no way to see that the program acknowledged its failure. Also
+        # the rest of the algorithm depends on the closing time.
         if not preferred.closed:
             return None
         # Preferred was closed too early after attempted.
-        if preferred.closed < preferred.attempted + 0.05:
-            return None
+        #
+        # When packets were dropped and preferred was closed too quickly,
+        # it means that the program didn't provide enough time for preferred
+        # to succeed.
+        #if dropped and preferred.closed < preferred.attempted + 0.05:
+        #    return None
         # Preferred was closed after fallback.
+        #
+        # When fallback has been actually used, it must not be closed before
+        # preferred.
         if fallback.closed and preferred.closed > fallback.closed:
             return None
         return preferred.closed - preferred.attempted
