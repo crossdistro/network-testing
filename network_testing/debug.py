@@ -10,6 +10,7 @@ log = logging.getLogger()
 
 SOCKET_OPERATIONS = set(['bind', 'listen', 'accept', 'connect', 'getsockopt', 'shutdown', 'close'])
 PROCESS_SYSCALLS = set(['close', 'execve', 'fork', 'clone'])
+MULTIPLEX_SYSCALLS = set(['select', 'poll', 'epoll_create1', 'epoll_ctl', 'epoll_wait'])
 TRACED_SYSCALLS = ptrace.syscall.SOCKET_SYSCALL_NAMES | PROCESS_SYSCALLS
 
 class Socket:
@@ -190,6 +191,8 @@ class SyscallDebugger(ptrace.debugger.PtraceDebugger):
                     if event.origin == script.origin and event.name == syscall:
                         process.syscall()
                         return event
+                elif event.name in MULTIPLEX_SYSCALLS:
+                    log.debug(event)
 
                 process.syscall()
 
