@@ -1,5 +1,5 @@
 .PHONY: all dist srpm copr
-FEDORA_VERSION="f25"
+FEDORA_VERSION = master
 
 all:
 
@@ -17,7 +17,7 @@ local: dist spec
 	fedpkg local
 
 srpm: dist spec
-	fedpkg --dist "$(FEDORA_VERSION)" srpm
+	fedpkg --dist $(FEDORA_VERSION) srpm
 
 copr: srpm
 	copr-cli build network-testing `fedpkg --dist "$(FEDORA_VERSION)" verrel`.src.rpm
