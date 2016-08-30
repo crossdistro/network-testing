@@ -1,0 +1,5 @@
+#!/bin/bash -e
+
+# nmap-ncat on Fedora doesn't seem to use /etc/services
+#echo "TEST" | nc -v $DESTINATION http
+echo "TEST" | nc -v $DESTINATION 80

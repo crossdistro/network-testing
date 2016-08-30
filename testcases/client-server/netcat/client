@@ -1,3 +1,0 @@
-#!/bin/bash -e
-
-echo "TEST" | nc -v -q 1 $DESTINATION http
