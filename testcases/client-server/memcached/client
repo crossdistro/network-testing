@@ -1,0 +1,19 @@
+#!/usr/bin/python
+"""
+This script is a client for memcached testing
+"""
+import os
+import memcache
+
+
+# get the destination
+nodename = os.environ['DESTINATION']
+# instancing Client
+cl = memcache.Client([nodename])
+
+# set-get test
+cl.set("key", "value")
+assert cl.get("key") == "value"
+
+# disconnect
+cl.disconnect_all()
