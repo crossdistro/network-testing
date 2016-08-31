@@ -1,0 +1,22 @@
+# User space networking test suite TODO list
+
+## Client-server test suite
+
+### Test framework
+
+  * Fix various issues resulting in tracebacks and error messages.
+      - Avoid spurious messages.
+      - Improve output.
+  * Implement proper UDP operation analysis based on existing UDP tests.
+  * Work with upstream python-ptrace so that the next release can be used
+    without patches.
+  * Review the results of all tests and the behavior of the test suite.
+  * Consider constraining writes to non-tmp directories.
+
+### Tests
+
+  * Add new tests for various pieces of client-server software
+
+## DHCP/NDP test suite
+
+  * Add test suite for IPv4/IPv6 automatic configuration using standard protocols.

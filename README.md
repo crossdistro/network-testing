@@ -85,3 +85,10 @@ use `exec` to run the client or server scripts in the same process. But
 any form of test is supported including scripts in Python and other
 languages. For inspiration look at `netresolve`, `ssh`, `python` and
 `python3-asyncio` testcases.
+
+The test should maintain the following properties:
+
+ * The server must run on foreground, accept connections and wait until being killed by the framework.
+ * The client must run on foreground, perform a query on the server and exit.
+ * No modification of system files. If you perform actions that change
+   files e.g. in `/etc` or `/var`, use private copies under `/run/network-testing` instead.
