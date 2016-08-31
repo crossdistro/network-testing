@@ -1,0 +1,4 @@
+#!/bin/bash -e
+
+# start memcached server as memcached user (default)
+memcached -u memcached 
