@@ -1,0 +1,4 @@
+#!/bin/bash -e
+
+export KRB5_CONFIG=/run/fedora-networking/krb5.conf
+exec echo aaa | kinit alice

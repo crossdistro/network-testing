@@ -1,0 +1,15 @@
+#!/bin/bash -e
+
+mkdir -p /run/fedora-networking
+cp -f krb5.conf /run/fedora-networking/
+export KRB5_CONFIG=/run/fedora-networking/krb5.conf
+cp -f kdc.conf /run/fedora-networking/
+cp -f kadm5.acl /run/fedora-networking/
+export KRB5_KDC_PROFILE=/run/fedora-networking/kdc.conf
+cd /run/fedora-networking
+rm -f principal* .k5*
+
+kdb5_util -s -P abc -W create
+kadmin.local -q 'ank -pw aaa alice'
+
+exec /usr/sbin/krb5kdc
