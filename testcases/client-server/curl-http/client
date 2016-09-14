@@ -1,0 +1,3 @@
+#!/bin/bash -e
+
+exec `which curl` http://$DESTINATION/curl-http-test.html
