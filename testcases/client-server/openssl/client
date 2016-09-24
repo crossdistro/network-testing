@@ -1,0 +1,3 @@
+#!/bin/bash -e
+
+echo "hello" | openssl s_client -connect $DESTINATION:44330

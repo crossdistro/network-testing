@@ -1,0 +1,7 @@
+#!/bin/bash -e
+mkdir -p /run/fedora-networking
+cd /run/fedora-networking
+
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem \
+    -days 360 -nodes -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com"
+exec `which openssl` s_server -key key.pem -cert cert.pem -accept 44330
