@@ -1,0 +1,8 @@
+#!/bin/bash -e
+
+mkdir -p /run/fedora-networking
+cd /run/fedora-networking
+
+echo "Hello World!" > curl-http-test.html
+exec `which nc` -l 80  < curl-http-test.html
+
