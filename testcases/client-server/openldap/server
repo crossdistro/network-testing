@@ -1,0 +1,11 @@
+#!/bin/bash -e
+
+mkdir -p /run/fedora-networking
+cp -u data.ldif /run/fedora-networking
+cp -u slapd.conf /etc/openldap/
+cd /run/fedora-networking
+
+slapadd -l data.ldif || echo "data.ldif is already added in openldap"
+
+exec `which slapd` -d 1 -h "ldap:/// ldaps:/// ldapi:///"
+

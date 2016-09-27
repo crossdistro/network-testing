@@ -1,0 +1,39 @@
+dn: dc=my-domain,dc=com
+objectclass: dcObject
+objectclass: organization
+dc: my-domain
+o: Test server
+
+# Organizational Role for Directory Management
+dn: cn=Manager,dc=my-domain,dc=com
+objectclass: organizationalRole
+cn: Manager
+description: Directory Manager
+
+# Setting up container for Users OU
+dn: ou=People,dc=my-domain,dc=com
+objectclass: top
+objectclass: organizationalUnit
+ou: People
+
+# Setting up admin handle for People OU
+dn: cn=admin,ou=People,dc=my-domain,dc=com
+cn: admin
+objectclass: top
+objectclass: organizationalRole
+objectclass: simpleSecurityObject
+userPassword: x
+
+# Setting up container for groups
+dn: ou=Groups,dc=my-domain,dc=com
+objectclass: top
+objectclass: organizationalUnit
+ou: Groups
+
+# Setting up admin handle for Groups OU
+dn: cn=admin,ou=Groups,dc=my-domain,dc=com
+cn: admin
+objectclass: top
+objectclass: organizationalRole
+objectclass: simpleSecurityObject
+userPassword: x
