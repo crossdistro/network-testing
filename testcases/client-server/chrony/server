@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+dir=/run/fedora-networking
+mkdir -p "$dir" || exit 1
+
+exec chronyd -d \
+	"bindcmdaddress /" \
+	"pidfile $dir/chrony-server.pid" \
+	"local stratum 5" \
+	"allow"

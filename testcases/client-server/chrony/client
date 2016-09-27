@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+dir=/run/fedora-networking
+mkdir -p "$dir" || exit 1
+
+exec chronyd -Q -d \
+	"bindcmdaddress /" \
+	"pidfile $dir/chrony-client.pid" \
+	"server $DESTINATION iburst"
