@@ -1,0 +1,3 @@
+#!/bin/bash -e
+
+exec `which ldapsearch` -H ldap://$DESTINATION -b "dc=my-domain,dc=com" -x '*'
