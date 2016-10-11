@@ -1,0 +1,6 @@
+#!/bin/bash -e
+
+mkdir -p /run/fedora-networking
+cd /run/fedora-networking
+
+echo "Hello World!" | gnutls-cli --x509cafile cert.pem  -p 31990 $DESTINATION -e
