@@ -1,0 +1,7 @@
+#!/bin/bash -e
+mkdir -p /run/fedora-networking
+cd /run/fedora-networking
+
+echo "HelloWorld!!!" > /var/ftp/pub/HelloWorld
+
+exec `which vsftpd`

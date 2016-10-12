@@ -1,0 +1,3 @@
+#!/bin/bash -e
+
+curl ftp://$DESTINATION/pub/HelloWorld
