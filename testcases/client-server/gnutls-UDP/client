@@ -1,0 +1,6 @@
+#!/bin/bash -e
+
+mkdir -p /run/fedora-networking
+cd /run/fedora-networking
+
+echo "Hello World!" | gnutls-cli -u --x509cafile cert.pem --priority NORMAL:-VERS-SSL3.0:-VERS-TLS1.0:-VERS-TLS1.1:-VERS-TLS1.2:-VERS-DTLS1.0:+VERS-DTLS0.9 -p 31991 $DESTINATION -e

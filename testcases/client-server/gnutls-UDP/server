@@ -1,0 +1,8 @@
+#!/bin/bash -e
+
+mkdir -p /run/fedora-networking
+cd /run/fedora-networking
+
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 360 -nodes -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=$DESTINATION"
+exec `which gnutls-serv` --x509certfile cert.pem --x509keyfile key.pem -p 31991 -u
+
