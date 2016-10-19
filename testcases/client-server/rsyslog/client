@@ -1,0 +1,5 @@
+#!/bin/bash -e
+
+DESTINATION="${DESTINATION:-localhost}"
+
+logger -p local4.emerg --port 31992 --tcp -n $DESTINATION "Hello World to $DESTINATION over TCP!!"
