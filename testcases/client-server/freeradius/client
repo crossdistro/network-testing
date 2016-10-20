@@ -1,0 +1,5 @@
+#!/bin/bash -e
+
+DESTINATION="${DESTINATION:-localhost}"
+
+echo "User-Name = testUser,User-Password=hello" | exec `which radclient` $DESTINATION auth testing123
