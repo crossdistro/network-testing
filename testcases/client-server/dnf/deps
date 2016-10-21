@@ -1,3 +1,4 @@
 yum
 rpm-build
 createrepo
+httpd
