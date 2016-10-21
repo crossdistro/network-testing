@@ -216,7 +216,8 @@ class Scenario(object):
                     continue
                 event.socket.status = event.arguments[3].value
             elif event.name == 'shutdown' and event.result == 0:
-                event.socket.shutdown = True
+                if event.socket:
+                    event.socket.shutdown = True
             elif event.name == 'close' and event.result == 0:
                 event.socket.closed = event.time
 
