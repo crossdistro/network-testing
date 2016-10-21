@@ -1,0 +1,11 @@
+#!/bin/bash -e
+mkdir -p /run/fedora-networking
+cd /run/fedora-networking
+
+DESTINATION="${DESTINATION:-localhost}"
+
+TMPDIR=`mktemp -d`
+
+dnf install -y dummy-rpm --disablerepo=* --enablerepo=fedora-networking \
+    --repofrompath fedora-networking,http://$DESTINATION/fedora-networking \
+    --installroot=/run/fedora-networking/$TMPDIR

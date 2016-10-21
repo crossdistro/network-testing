@@ -1,0 +1,20 @@
+#!/bin/bash -e
+mkdir -p /run/fedora-networking
+/usr/bin/cp -u dummy.spec /run/fedora-networking/
+cd /run/fedora-networking
+
+rpmbuild -ba dummy.spec
+
+mkdir -p /var/www/html/fedora-networking
+
+/usr/bin/cp -u \
+    /root/rpmbuild/RPMS/noarch/dummy-rpm-1.0-1.noarch.rpm \
+    /var/www/html/fedora-networking
+
+cd /var/www/html
+
+createrepo fedora-networking
+
+cd /run/fedora-networking
+
+exec `which httpd`
