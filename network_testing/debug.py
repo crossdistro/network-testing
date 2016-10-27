@@ -223,3 +223,12 @@ class SyscallDebugger(ptrace.debugger.PtraceDebugger):
                 else:
                     raise Timeout()
             time.sleep(pause)
+
+    # Workaround https://github.com/haypo/python-ptrace/pull/2
+    def waitExit(self):
+        raise SystemExit()
+        try:
+            SyscallDebugger.waitExit(self)
+        except PtraceError as error:
+            if error.errno != 3:
+                raise
