@@ -1,0 +1,8 @@
+#!/bin/bash -e
+
+DESTINATION="${DESTINATION:-localhost}"
+
+gcc -lrelp send.c -o send
+
+./send $DESTINATION 31994 "Hello World! over RELP"
+

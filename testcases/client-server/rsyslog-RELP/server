@@ -1,0 +1,13 @@
+#!/bin/bash -e
+mkdir -p /run/fedora-networking
+cd /run/fedora-networking
+
+cp /etc/rsyslog.conf .
+DESTINATION="${DESTINATION:-localhost}"
+
+cat <<EOF >> rsyslog.conf
+\$ModLoad imrelp # needs to be done just once
+\$InputRELPServerRun 31994
+EOF
+
+exec `which rsyslogd` -f /run/fedora-networking/rsyslog.conf
