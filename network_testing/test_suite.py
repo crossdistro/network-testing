@@ -240,16 +240,22 @@ class Scenario(object):
         os.environ['NETRESOLVE_SYSCONFDIR'] = data_path;
         os.environ['DEFAULT_SERVICE'] = 'http'
 
+    def delns_if_exists(self, ns):
+        if os.path.exists("/var/run/netns/%s" %(ns)):
+            subprocess.call(['ip', 'netns', 'delete', ns])
+        if ns in self.namespaces:
+            self.namespaces.remove(ns)
+
     def cleanup(self):
         for ns in self.namespaces:
-            subprocess.call(['ip', 'netns', 'delete', ns])
+            self.delns_if_exists(ns)
 
     def postprocess(self):
         pass
 
     def _add_netns(self, ns):
+        self.delns_if_exists(ns)
         self.namespaces.append(ns)
-        subprocess.call(['ip', 'netns', 'delete', ns])
         subprocess.check_call(['ip', 'netns', 'add', ns])
         subprocess.check_call(['ip', '-n', ns, 'link', 'set', 'lo', 'up'])
 
